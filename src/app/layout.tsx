@@ -1,4 +1,3 @@
-import BottomNav from "@/components/navigation/BottomNav";
 import type { Metadata } from "next";
 
 import {
@@ -42,7 +41,7 @@ export default function RootLayout({
       <body className="min-h-full bg-white font-[var(--font-arabic)]">
        <AuthProvider>
   {children}
-  <BottomNav />
+  
 </AuthProvider>
       </body>
     </html>
