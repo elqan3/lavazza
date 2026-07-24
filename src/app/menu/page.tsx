@@ -29,7 +29,6 @@ export default function MenuPage() {
 
   return (
 <main
-  className={`${readex.className} min-h-screen bg-gradient-to-b from-lavaza-blue via-[#16284a] to-[#0d1830] text-white dir-rtl`}
 >
       {/* ================= Header ================= */}
       <header className="bg-[#102040]/85 border-b border-white/10 backdrop-blur-xl">

@@ -7,8 +7,14 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
   --font-arabic: var(--font-arabic);
   --font-jakarta: var(--font-jakarta);
+
+  --color-lavaza-primary: #1a2a4a;
+  --color-lavaza-gold: #d4af37;
+  --color-lavaza-cream: #f8f7f4;
+  --color-lavaza-blue: #1a2a4a;
 }
 
 html,
