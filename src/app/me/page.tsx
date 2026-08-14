@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/services/supabase/client";
 
 export default async function Me() {
   const {
@@ -7,7 +7,7 @@ export default async function Me() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth");
+    redirect("/auth/login");
   }
 
   redirect(`/profile/${user.id}`);

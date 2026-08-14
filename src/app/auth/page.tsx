@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/services/supabase/client";
 import { useRouter } from "next/navigation";
 
 
@@ -204,12 +204,12 @@ return (
 
 <main className="
 min-h-screen
-bg-[#1a2a4a]
+bg-[#0b1428]
 flex
 items-center
 justify-center
-px-4
-py-8
+px-5
+py-10
 text-white
 ">
 
@@ -218,18 +218,31 @@ text-white
 w-full
 max-w-md
 bg-white/10
-backdrop-blur
+backdrop-blur-xl
+border
+border-white/10
 rounded-3xl
 p-6
-shadow-xl
+shadow-2xl
 ">
 
 
+<div className="text-center mb-8">
+
+<img
+src="/menu/logo.png"
+alt="Lavaza"
+className="
+w-20
+mx-auto
+mb-4
+"
+/>
+
+
 <h1 className="
-text-3xl
+text-2xl
 font-bold
-text-center
-mb-8
 ">
 
 انضم إلى Lavaza Mood ☕
@@ -237,17 +250,26 @@ mb-8
 </h1>
 
 
-
-<div className="
-flex
-flex-col
-items-center
-mb-6
+<p className="
+text-white/60
+text-sm
+mt-2
 ">
+
+اصنع حسابك وشارك لحظاتك
+
+</p>
+
+</div>
+
+
 
 
 <label className="
 cursor-pointer
+flex
+justify-center
+mb-6
 ">
 
 
@@ -256,16 +278,16 @@ w-28
 h-28
 rounded-full
 overflow-hidden
-bg-white/20
+border-2
+border-[#d4af37]
+bg-white/10
 flex
 items-center
 justify-center
-border-2
-border-[#d4af37]
 ">
 
-
 {
+
 preview ?
 
 <img
@@ -279,9 +301,7 @@ object-cover
 
 :
 
-<span className="
-text-4xl
-">
+<span className="text-4xl">
 📷
 </span>
 
@@ -289,6 +309,7 @@ text-4xl
 
 
 </div>
+
 
 
 <input
@@ -307,10 +328,12 @@ className="hidden"
 </label>
 
 
+
 <p className="
-text-sm
-text-gray-300
-mt-3
+text-center
+text-xs
+text-white/50
+mb-6
 ">
 
 اختر صورتك الشخصية
@@ -318,15 +341,12 @@ mt-3
 </p>
 
 
-</div>
-
-
 
 
 
 <input
 
-placeholder="الاسم"
+placeholder="الاسم الكامل"
 
 value={name}
 
@@ -337,8 +357,11 @@ w-full
 mb-4
 p-4
 rounded-2xl
-bg-white/20
+bg-white/10
+border
+border-white/10
 outline-none
+focus:border-[#d4af37]
 "
 
 />
@@ -360,8 +383,11 @@ w-full
 mb-4
 p-4
 rounded-2xl
-bg-white/20
+bg-white/10
+border
+border-white/10
 outline-none
+focus:border-[#d4af37]
 "
 
 />
@@ -385,11 +411,15 @@ w-full
 mb-6
 p-4
 rounded-2xl
-bg-white/20
+bg-white/10
+border
+border-white/10
 outline-none
+focus:border-[#d4af37]
 "
 
 />
+
 
 
 
@@ -404,25 +434,56 @@ disabled={loading}
 className="
 w-full
 bg-[#d4af37]
-text-black
+text-[#16284a]
 py-4
 rounded-full
 font-bold
 text-lg
+active:scale-95
+transition
 "
 
 >
 
 {
+
 loading
 ?
 "جاري إنشاء الحساب..."
 :
 "إنشاء حساب"
+
 }
 
 
 </button>
+
+
+
+<div className="
+text-center
+mt-6
+text-sm
+text-white/70
+">
+
+لديك حساب بالفعل؟
+
+<a
+href="/login"
+className="
+text-[#d4af37]
+font-bold
+mr-2
+"
+>
+
+تسجيل الدخول
+
+</a>
+
+
+</div>
 
 
 
@@ -431,6 +492,5 @@ loading
 
 </main>
 
-)
-
+);
 }

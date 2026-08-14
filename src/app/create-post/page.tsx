@@ -1,42 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import Image from "next/image";
+import { supabase } from "@/services/supabase/client";
 import { useRouter } from "next/navigation";
+import { ImagePlus, Coffee } from "lucide-react";
+
+export default function CreatePost() {
+
+  const router = useRouter();
+
+  const [image,setImage] = useState<File | null>(null);
+  const [preview,setPreview] = useState("");
+  const [content,setContent] = useState("");
+  const [loading,setLoading] = useState(false);
 
 
-export default function CreatePost(){
+  function handleImage(e: React.ChangeEvent<HTMLInputElement>){
 
-const router = useRouter();
+    const file = e.target.files?.[0];
 
+    if(file){
 
-const [image,setImage] = useState<File | null>(null);
-const [preview,setPreview] = useState("");
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
 
-const [content,setContent] = useState("");
+    }
 
-const [loading,setLoading] = useState(false);
-
-
-
-function handleImage(e: React.ChangeEvent<HTMLInputElement>){
-
-const file = e.target.files?.[0];
-
-if(file){
-
-setImage(file);
-setPreview(URL.createObjectURL(file));
-
-}
-
-}
-
-
+  }
 
 
 async function publishPost(){
-
 
 if(!image || !content){
 
@@ -47,7 +41,6 @@ return;
 
 
 setLoading(true);
-
 
 
 const {
@@ -65,29 +58,22 @@ return;
 
 
 
-// رفع الصورة
-
 const fileName =
 `${user.id}-${Date.now()}.jpg`;
 
 
 
-const {error:uploadError}=await supabase
-.storage
+const {error:uploadError}=await supabase.storage
 .from("mood-images")
 .upload(
 fileName,
-image,
-{
-upsert:false
-}
+image
 );
 
 
 
 if(uploadError){
 
-console.log(uploadError);
 alert(uploadError.message);
 setLoading(false);
 return;
@@ -96,38 +82,21 @@ return;
 
 
 
-
-// الحصول على الرابط
-
 const {
 data:urlData
-}=supabase
-.storage
+}=supabase.storage
 .from("mood-images")
 .getPublicUrl(fileName);
 
 
 
-const imageUrl =
-urlData.publicUrl;
-
-
-
-
-// إنشاء المنشور
-
-
 const {error:postError}=await supabase
-
 .from("posts")
-
 .insert({
 
 user_id:user.id,
-
-image_url:imageUrl,
-
-content:content
+image_url:urlData.publicUrl,
+content
 
 });
 
@@ -135,9 +104,7 @@ content:content
 
 if(postError){
 
-console.log(postError);
 alert(postError.message);
-
 setLoading(false);
 return;
 
@@ -155,84 +122,89 @@ return (
 
 <main className="
 min-h-screen
-bg-[#1a2a4a]
+bg-[#0b1428]
 text-white
-px-4
+px-5
 py-8
+">
+
+
+<header className="
 flex
+items-center
 justify-center
+mb-8
 ">
-
-
-<div className="
-w-full
-max-w-md
-bg-white/10
-backdrop-blur
-rounded-3xl
-p-6
-">
-
 
 <h1 className="
-text-3xl
+text-xl
 font-bold
-text-center
-mb-8
 ">
 
 شارك لحظتك ☕
 
 </h1>
 
+</header>
+
+
+
+<div className="
+max-w-md
+mx-auto
+space-y-6
+">
 
 
 
 <label className="
-cursor-pointer
 block
+cursor-pointer
 ">
 
 
 <div className="
-w-full
-h-72
+relative
+aspect-square
 rounded-3xl
-bg-white/10
+overflow-hidden
+border
+border-white/10
+bg-[#16284a]
 flex
 items-center
 justify-center
-overflow-hidden
-border
-border-white/20
+shadow-xl
 ">
 
 
 {
 preview ?
 
-<img
-
+<Image
 src={preview}
-
+alt=""
+fill
+sizes="(max-width: 768px) 100vw, 500px"
 className="
-w-full
-h-full
 object-cover
 "
-
 />
 
 :
 
-<div className="text-center">
+<div className="
+text-center
+text-white/60
+">
 
-<div className="text-5xl">
-📸
-</div>
+<ImagePlus
+size={45}
+className="mx-auto mb-3 text-[#d4af37]"
+/>
 
-<p className="mt-3 text-gray-300">
-اختر صورة
+<p>
+أضف صورة اللحظة
 </p>
 
 </div>
@@ -241,7 +213,6 @@ object-cover
 
 
 </div>
-
 
 
 <input
@@ -264,24 +235,29 @@ className="hidden"
 
 <textarea
 
-placeholder="اكتب وصف اللحظة..."
-
 value={content}
 
 onChange={(e)=>setContent(e.target.value)}
 
+placeholder="اكتب وصف اللحظة..."
+
 className="
-mt-6
 w-full
-h-32
-rounded-2xl
-bg-white/20
-p-4
+h-36
+rounded-3xl
+bg-white/10
+border
+border-white/10
+p-5
+text-white
+placeholder:text-white/40
 outline-none
 resize-none
+focus:border-[#d4af37]
 "
 
 />
+
 
 
 
@@ -293,24 +269,31 @@ onClick={publishPost}
 disabled={loading}
 
 className="
-mt-6
 w-full
-bg-[#d4af37]
-text-black
 py-4
 rounded-full
+bg-[#d4af37]
+text-[#16284a]
 font-bold
 text-lg
+flex
+items-center
+justify-center
+gap-2
+active:scale-95
+transition
 "
 
 >
+
+<Coffee size={22}/>
 
 {
 loading
 ?
 "جاري النشر..."
 :
-"نشر اللحظة ☕"
+"نشر اللحظة"
 }
 
 

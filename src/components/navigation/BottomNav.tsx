@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Home, PlusSquare, User } from "lucide-react";
+import {
+  Home,
+  PlusSquare,
+  User,
+  Trophy,
+  Coffee,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useAuth } from "@/features/auth/components/AuthProvider";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -11,70 +17,167 @@ export default function BottomNav() {
 
   if (!user) return null;
 
+  // لا نظهر الـ BottomNav داخل الإدارة أو صفحات تسجيل الدخول
+  if (
+    pathname.startsWith("/admin") ||
+    pathname === "/login" ||
+    pathname === "/auth"
+  ) {
+    return null;
+  }
+
+  const isMood = pathname.startsWith("/mood-space");
+  const isLeaderboard = pathname.startsWith("/leaderboard");
+  const isProfile = pathname.startsWith("/profile");
+  const isHome = pathname === "/home";
+  const isMenu = pathname.startsWith("/menu");
+
   return (
     <nav
+      dir="rtl"
       className="
-      fixed
-      bottom-0
-      left-0
-      right-0
-      bg-[#1a2a4a]/95
-      backdrop-blur-xl
-      border-t
-      border-white/10
-      z-50
+        fixed
+        bottom-0
+        left-0
+        right-0
+        z-50
+        border-t
+        border-white/10
+        bg-[#0a1326]/95
+        backdrop-blur-xl
       "
     >
       <div
         className="
-        max-w-md
-        mx-auto
-        h-16
-        flex
-        items-center
-        justify-around
+          mx-auto
+          flex
+          h-20
+          max-w-xl
+          items-center
+          justify-around
+          px-2
         "
       >
+
+        {/* الرئيسية */}
         <Link
-          href="/mood-space"
-          className={`flex flex-col items-center text-xs ${
-            pathname === "/mood-space"
-              ? "text-[#d4af37]"
-              : "text-white"
-          }`}
+          href="/home"
+          className={`
+            flex
+            min-w-[55px]
+            flex-col
+            items-center
+            gap-1
+            text-[10px]
+            transition
+            ${
+              isHome
+                ? "text-[#d4af37]"
+                : "text-white/60 hover:text-white"
+            }
+          `}
         >
-          <Home size={22} />
+          <Home size={21} />
           <span>الرئيسية</span>
         </Link>
 
+
+        {/* المنيو */}
         <Link
-          href="/create-post"
-          className="
-          -mt-8
-          w-16
-          h-16
-          rounded-full
-          bg-[#d4af37]
-          flex
-          items-center
-          justify-center
-          shadow-xl
-          "
+          href="/menu"
+          className={`
+            flex
+            min-w-[55px]
+            flex-col
+            items-center
+            gap-1
+            text-[10px]
+            transition
+            ${
+              isMenu
+                ? "text-[#d4af37]"
+                : "text-white/60 hover:text-white"
+            }
+          `}
         >
-          <PlusSquare color="#1a2a4a" size={28} />
+          <Coffee size={21} />
+          <span>المنيو</span>
         </Link>
 
+
+        {/* زر إنشاء منشور */}
+        <Link
+          href="/create-post"
+          aria-label="إنشاء منشور"
+          className="
+            -mt-8
+            flex
+            h-16
+            w-16
+            items-center
+            justify-center
+            rounded-full
+            border-4
+            border-[#0a1326]
+            bg-[#d4af37]
+            shadow-2xl
+            transition
+            hover:brightness-105
+            active:scale-90
+          "
+        >
+          <PlusSquare
+            size={27}
+            className="text-[#16284a]"
+          />
+        </Link>
+
+
+        {/* المتصدرين */}
+        <Link
+          href="/leaderboard"
+          className={`
+            flex
+            min-w-[55px]
+            flex-col
+            items-center
+            gap-1
+            text-[10px]
+            transition
+            ${
+              isLeaderboard
+                ? "text-[#d4af37]"
+                : "text-white/60 hover:text-white"
+            }
+          `}
+        >
+          <Trophy size={21} />
+          <span>المتصدرون</span>
+        </Link>
+
+
+        {/* حسابي */}
         <Link
           href={`/profile/${user.id}`}
-          className={`flex flex-col items-center text-xs ${
-            pathname.startsWith("/profile")
-              ? "text-[#d4af37]"
-              : "text-white"
-          }`}
+          className={`
+            flex
+            min-w-[55px]
+            flex-col
+            items-center
+            gap-1
+            text-[10px]
+            transition
+            ${
+              isProfile
+                ? "text-[#d4af37]"
+                : "text-white/60 hover:text-white"
+            }
+          `}
         >
-          <User size={22} />
+          <User size={21} />
           <span>حسابي</span>
         </Link>
+
       </div>
     </nav>
   );

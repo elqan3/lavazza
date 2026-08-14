@@ -1,24 +1,15 @@
 import type { Metadata } from "next";
+import { Readex_Pro } from "next/font/google";
 
-import {
-  Alexandria,
-  Plus_Jakarta_Sans,
-} from "next/font/google";
 import "./globals.css";
 
-import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthProvider } from "@/features/auth/components/AuthProvider";
+import GlobalNavigation from "@/components/navigation/GlobalNavigation";
 
-const alexandria = Alexandria({
-  subsets: ["arabic"],
-  variable: "--font-arabic",
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
-  weight: ["400", "500", "600", "700", "800"],
+const readexPro = Readex_Pro({
+  subsets: ["arabic", "latin"],
+  variable: "--font-readex",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -36,13 +27,19 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${alexandria.variable} ${jakarta.variable} h-full antialiased`}
+      className={`${readexPro.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-white font-[var(--font-arabic)]">
-       <AuthProvider>
-  {children}
-  
-</AuthProvider>
+      <body
+        className="
+          min-h-full
+          bg-white
+          font-[family-name:var(--font-readex)]
+        "
+      >
+        <AuthProvider>
+          {children}
+          <GlobalNavigation />
+        </AuthProvider>
       </body>
     </html>
   );
