@@ -34,6 +34,19 @@ export default function AuthPage() {
       setPreview(URL.createObjectURL(file));
     }
   }
+  async function handleGoogleLogin() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error(error);
+    alert("تعذر تسجيل الدخول باستخدام Google");
+  }
+}
 
   async function handleRegister() {
     const cleanName = name.trim();
@@ -208,7 +221,44 @@ export default function AuthPage() {
             اصنع حسابك وشارك لحظاتك
           </p>
         </div>
+<div className="mt-6">
+  <button
+    type="button"
+    onClick={handleGoogleLogin}
+    className="
+      w-full
+      bg-white
+      text-[#1a2a4a]
+      py-4
+      rounded-full
+      font-bold
+      flex
+      items-center
+      justify-center
+      gap-3
+      shadow-lg
+      hover:bg-gray-100
+      transition
+      active:scale-95
+    "
+  >
+    <span className="text-lg font-bold">
+      G
+    </span>
 
+    متابعة باستخدام Google
+  </button>
+</div>
+
+<div className="flex items-center gap-3 my-6">
+  <div className="h-px flex-1 bg-white/10" />
+
+  <span className="text-xs text-white/40">
+    أو التسجيل بالطريقة المعتادة
+  </span>
+
+  <div className="h-px flex-1 bg-white/10" />
+</div>
         {/* Avatar */}
 
         <label className="cursor-pointer flex justify-center mb-6">
