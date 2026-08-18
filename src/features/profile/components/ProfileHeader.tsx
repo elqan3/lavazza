@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Settings, Trophy, Flame } from "lucide-react";
 import { supabase } from "@/services/supabase/client";
+import { ArrowRight, Settings, Trophy, Flame, LogOut } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 type Props = {
   userId: string;
@@ -122,7 +123,23 @@ export default function ProfileHeader({ userId }: Props) {
       </section>
     );
   }
+async function handleLogout() {
+  const confirmed = window.confirm(
+    "هل أنت متأكد أنك تريد تسجيل الخروج؟"
+  );
 
+  if (!confirmed) return;
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("LOGOUT ERROR:", error);
+    alert("حدث خطأ أثناء تسجيل الخروج");
+    return;
+  }
+
+  window.location.href = "/login";
+}
   const isOwner = currentUserId === userId;
 
   const isTopThree = rank !== null && rank >= 1 && rank <= 3;
@@ -377,7 +394,35 @@ export default function ProfileHeader({ userId }: Props) {
           </div>
 
         </div>
+{/* Feedback */}
 
+{isOwner && (
+  <Link
+    href="/feedback"
+    className="
+      mt-6
+      flex
+      w-full
+      items-center
+      justify-center
+      gap-2
+      rounded-full
+      border
+      border-white/10
+      bg-white/5
+      py-3.5
+      font-bold
+      text-white/70
+      transition
+      hover:bg-white/10
+      hover:text-white
+      active:scale-[0.97]
+    "
+  >
+    <MessageSquare size={18} />
+    شاركنا رأيك
+  </Link>
+)}
         {/* Leaderboard link */}
         <Link
           href="/leaderboard"
@@ -429,7 +474,33 @@ export default function ProfileHeader({ userId }: Props) {
             تعديل الحساب
           </Link>
         )}
-
+{isOwner && (
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="
+      mt-3
+      flex
+      w-full
+      items-center
+      justify-center
+      gap-2
+      rounded-full
+      border
+      border-red-400/20
+      bg-red-400/5
+      py-3.5
+      font-bold
+      text-red-300
+      transition
+      hover:bg-red-400/10
+      active:scale-[0.97]
+    "
+  >
+    <LogOut size={18} />
+    تسجيل الخروج
+  </button>
+)}
       </div>
     </section>
   );

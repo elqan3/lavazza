@@ -39,7 +39,7 @@ export default async function ProfilePosts({ userId }: Props) {
 
         {posts && posts.length > 0 ? (
 
-          <div className="space-y-5">
+          <div className="space-y-5 pb-22">
 
             {posts.map((post)=>(
               <ProfilePostCard

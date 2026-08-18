@@ -10,6 +10,7 @@ import {
   Heart,
   ArrowLeft,
   Settings,
+   MessageSquare,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -44,6 +45,15 @@ export default async function AdminPage() {
       count: "exact",
       head: true,
     });
+
+    // عدد الملاحظات الجديدة
+const { count: newFeedbackCount } = await supabase
+  .from("feedback")
+  .select("*", {
+    count: "exact",
+    head: true,
+  })
+  .eq("status", "new");
 
   return (
     <main
@@ -341,7 +351,105 @@ export default async function AdminPage() {
 
 
         <div className="grid gap-4 sm:grid-cols-2">
+{/* Feedback */}
 
+<Link
+  href="/admin/feedback"
+  className="
+    group
+    relative
+    overflow-hidden
+    rounded-[2rem]
+    border
+    border-white/10
+    bg-[#16284a]
+    p-6
+    shadow-xl
+    transition
+    hover:-translate-y-1
+    hover:border-[#d4af37]/40
+    hover:shadow-2xl
+    active:scale-[0.98]
+  "
+>
+
+  <div className="flex items-start justify-between">
+
+    <div
+      className="
+        flex
+        h-14
+        w-14
+        items-center
+        justify-center
+        rounded-2xl
+        bg-[#d4af37]/10
+        text-[#d4af37]
+      "
+    >
+      <MessageSquare size={28} />
+    </div>
+
+    {newFeedbackCount && newFeedbackCount > 0 ? (
+      <span
+        className="
+          flex
+          min-w-8
+          h-8
+          items-center
+          justify-center
+          rounded-full
+          bg-red-500
+          px-2
+          text-xs
+          font-black
+          text-white
+          shadow-lg
+          shadow-red-500/20
+        "
+      >
+        {newFeedbackCount > 99
+          ? "99+"
+          : newFeedbackCount}
+      </span>
+    ) : (
+      <ArrowLeft
+        size={20}
+        className="
+          text-white/20
+          transition
+          group-hover:-translate-x-1
+          group-hover:text-[#d4af37]
+        "
+      />
+    )}
+
+  </div>
+
+  <h3 className="mt-6 text-lg font-bold">
+    ملاحظات العملاء
+  </h3>
+
+  <p className="mt-2 text-sm leading-7 text-white/50">
+    قراءة آراء العملاء والاقتراحات والشكاوى ومتابعة حالتها.
+  </p>
+
+  <div className="mt-5 flex items-center justify-between">
+
+    <span className="text-sm font-bold text-[#d4af37]">
+      فتح الملاحظات
+    </span>
+
+    {newFeedbackCount !== null &&
+      newFeedbackCount > 0 && (
+        <span className="text-xs text-red-300">
+          {newFeedbackCount} جديدة
+        </span>
+      )}
+
+  </div>
+
+</Link>
           {/* Mood Space */}
 
           <Link
