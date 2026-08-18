@@ -149,7 +149,7 @@ export default function MoodHeader() {
 
             {/* Profile */}
             <Link
-              href="/me"
+              href={`/profile/${user.id}`}
               className="shrink-0"
             >
               <Image
