@@ -1,0 +1,397 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const BUCKET = "payment-proofs";
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+async function sha256(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+
+  const hash = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(hash))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function getEnv(name: string) {
+  const value = Deno.env.get(name);
+
+  if (!value) {
+    throw new Error(`Missing environment variable: ${name}`);
+  }
+
+  return value;
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
+
+  if (req.method !== "POST") {
+    return json(
+      {
+        success: false,
+        error: "Method not allowed",
+      },
+      405,
+    );
+  }
+
+  try {
+    const supabaseUrl = getEnv("SUPABASE_URL");
+    const serviceRoleKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+    const supabase = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      },
+    );
+
+    const body = await req.json();
+
+    const action = body?.action;
+
+    if (action !== "prepare" && action !== "finalize") {
+      return json(
+        {
+          success: false,
+          error: "Invalid action",
+        },
+        400,
+      );
+    }
+
+    const orderId = body?.orderId;
+    const trackingToken = body?.trackingToken;
+
+    if (
+      typeof orderId !== "string" ||
+      typeof trackingToken !== "string" ||
+      !orderId ||
+      !trackingToken
+    ) {
+      return json(
+        {
+          success: false,
+          error: "Order ID and tracking token are required",
+        },
+        400,
+      );
+    }
+
+    const tokenHash = await sha256(trackingToken);
+
+    // --------------------------------------------------
+    // PREPARE
+    // --------------------------------------------------
+
+    if (action === "prepare") {
+      const { data, error } = await supabase.rpc(
+        "prepare_payment_proof_upload",
+        {
+          p_order_id: orderId,
+          p_tracking_token_hash: tokenHash,
+        },
+      );
+
+      if (error) {
+        console.error("prepare RPC error:", error);
+
+        return json(
+          {
+            success: false,
+            error: error.message,
+          },
+          400,
+        );
+      }
+
+      const result = data?.[0];
+
+      if (!result) {
+        return json(
+          {
+            success: false,
+            error: "Unable to prepare payment proof upload",
+          },
+          400,
+        );
+      }
+
+      const {
+        order_id,
+        storage_path,
+        payment_deadline,
+      } = result;
+
+      const {
+        data: signedUpload,
+        error: uploadError,
+      } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUploadUrl(storage_path);
+
+      if (uploadError || !signedUpload) {
+        console.error(
+          "Signed upload URL error:",
+          uploadError,
+        );
+
+        return json(
+          {
+            success: false,
+            error: "Unable to create secure upload URL",
+          },
+          500,
+        );
+      }
+
+      return json({
+        success: true,
+        action: "prepare",
+        orderId: order_id,
+        storagePath: storage_path,
+        token: signedUpload.token,
+        paymentDeadline: payment_deadline,
+      });
+    }
+
+    // --------------------------------------------------
+    // FINALIZE
+    // --------------------------------------------------
+
+    const storagePath = body?.storagePath;
+
+    if (
+      typeof storagePath !== "string" ||
+      !storagePath.startsWith(`${orderId}/`)
+    ) {
+      return json(
+        {
+          success: false,
+          error: "Invalid storage path",
+        },
+        400,
+      );
+    }
+
+    // Never allow arbitrary paths.
+    const fileName = storagePath.substring(
+      orderId.length + 1,
+    );
+
+    if (!fileName || fileName.includes("/")) {
+      return json(
+        {
+          success: false,
+          error: "Invalid payment proof path",
+        },
+        400,
+      );
+    }
+
+    // The path generated by prepare_payment_proof_upload()
+    // always ends with .jpg.
+    if (!fileName.endsWith(".jpg")) {
+      return json(
+        {
+          success: false,
+          error: "Invalid payment proof file",
+        },
+        400,
+      );
+    }
+
+    // --------------------------------------------------
+    // Verify the uploaded object actually exists.
+    // --------------------------------------------------
+
+    const folder = orderId;
+
+    const {
+      data: objects,
+      error: listError,
+    } = await supabase.storage
+      .from(BUCKET)
+      .list(folder, {
+        limit: 100,
+      });
+
+    if (listError) {
+      console.error(
+        "Storage list error:",
+        listError,
+      );
+
+      return json(
+        {
+          success: false,
+          error: "Unable to verify uploaded file",
+        },
+        500,
+      );
+    }
+
+    const uploadedObject = objects?.find(
+      (object) => object.name === fileName,
+    );
+
+    if (!uploadedObject) {
+      return json(
+        {
+          success: false,
+          error: "Uploaded payment proof was not found",
+        },
+        400,
+      );
+    }
+
+    const metadata = uploadedObject.metadata as
+      | {
+          size?: number | string;
+          mimetype?: string;
+          contentType?: string;
+        }
+      | null;
+
+    const size = Number(metadata?.size ?? 0);
+
+    const contentType =
+      metadata?.mimetype ??
+      metadata?.contentType ??
+      "";
+
+    if (
+      size <= 0 ||
+      size > MAX_FILE_SIZE
+    ) {
+      await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+
+      return json(
+        {
+          success: false,
+          error: "Invalid payment proof file size",
+        },
+        400,
+      );
+    }
+
+    if (!ALLOWED_TYPES.has(contentType)) {
+      await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+
+      return json(
+        {
+          success: false,
+          error: "Invalid payment proof file type",
+        },
+        400,
+      );
+    }
+
+    // --------------------------------------------------
+    // Register proof in DB.
+    // --------------------------------------------------
+
+    const {
+      data,
+      error,
+    } = await supabase.rpc(
+      "submit_payment_proof",
+      {
+        p_order_id: orderId,
+        p_tracking_token_hash: tokenHash,
+        p_storage_path: storagePath,
+      },
+    );
+
+    if (error) {
+      console.error(
+        "submit_payment_proof error:",
+        error,
+      );
+
+      await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+
+      return json(
+        {
+          success: false,
+          error: error.message,
+        },
+        400,
+      );
+    }
+
+    const result = data?.[0];
+
+    if (!result) {
+      await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+
+      return json(
+        {
+          success: false,
+          error: "Unable to register payment proof",
+        },
+        500,
+      );
+    }
+
+    return json({
+      success: true,
+      action: "finalize",
+      proofId: result.proof_id,
+      paymentId: result.payment_id,
+      orderId: result.order_id,
+      paymentStatus: result.payment_status,
+    });
+  } catch (error) {
+    console.error("payment-proof function error:", error);
+
+    return json(
+      {
+        success: false,
+        error: "Internal server error",
+      },
+      500,
+    );
+  }
+});

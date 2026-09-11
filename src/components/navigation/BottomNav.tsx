@@ -17,14 +17,17 @@ export default function BottomNav() {
 
   if (!user) return null;
 
-  // لا نظهر الـ BottomNav داخل الإدارة أو صفحات تسجيل الدخول
-  if (
-    pathname.startsWith("/admin") ||
-    pathname === "/login" ||
-    pathname === "/auth"
-  ) {
-    return null;
-  }
+// لا نظهر الـ BottomNav داخل نظام الطلبات أو الإدارة أو صفحات تسجيل الدخول
+if (
+  pathname.startsWith("/order") ||
+  pathname.startsWith("/orders") ||
+  pathname.startsWith("/admin") ||
+  pathname === "/login" ||
+  pathname === "/auth"
+) {
+  return null;
+}
+
 
   const isMood = pathname.startsWith("/mood-space");
   const isLeaderboard = pathname.startsWith("/leaderboard");

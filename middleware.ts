@@ -1,7 +1,13 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+import { createServerClient } from "@supabase/ssr";
+import {
+  NextResponse,
+  type NextRequest,
+} from "next/server";
+
+export async function middleware(
+  request: NextRequest,
+) {
   let response = NextResponse.next({
     request,
   });
@@ -15,24 +21,52 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
 
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-          });
+        setAll(
+          cookiesToSet,
+          headers,
+        ) {
+          cookiesToSet.forEach(
+            ({ name, value }) => {
+              request.cookies.set(
+                name,
+                value,
+              );
+            },
+          );
 
           response = NextResponse.next({
             request,
           });
 
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          cookiesToSet.forEach(
+            ({
+              name,
+              value,
+              options,
+            }) => {
+              response.cookies.set(
+                name,
+                value,
+                options,
+              );
+            },
+          );
+
+          Object.entries(headers).forEach(
+            ([key, value]) => {
+              response.headers.set(
+                key,
+                value,
+              );
+            },
+          );
         },
       },
-    }
+    },
   );
 
-  await supabase.auth.getUser();
+  // التحقق من الجلسة وتحديثها عند الحاجة
+  await supabase.auth.getClaims();
 
   return response;
 }
