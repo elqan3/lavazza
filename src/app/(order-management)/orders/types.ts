@@ -30,6 +30,8 @@ export type ManagementOrder = {
   order_number: number;
   order_type: OrderType;
   order_status: OrderStatus;
+  branch_id: string;
+  branch_name: string;
   customer_name: string;
   customer_phone: string;
   total: number;
