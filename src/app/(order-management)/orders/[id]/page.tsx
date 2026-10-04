@@ -42,6 +42,8 @@ export default async function OrderDetailsPage({
     id: data.order.id,
     order_number: Number(data.order.orderNumber),
     order_type: data.order.orderType,
+    branch_id: data.order.branchId,
+    branch_name: data.order.branchName,
     order_status: data.order.status,
 
     customer_name: data.order.customerName,
