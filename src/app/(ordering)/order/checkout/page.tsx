@@ -15,7 +15,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createGuestOrder, getActiveBranches } from "./actions";
+import { createGuestOrder } from "./actions";
+import { supabase } from "@/services/supabase/client";
 
 type CartItem = {
   product: {
@@ -102,13 +103,26 @@ export default function CheckoutPage() {
       setLoaded(true);
     }
 
-    getActiveBranches()
-      .then((data) => setBranches(data))
-      .catch((err) => {
-        console.error(err);
+    async function loadBranches() {
+      try {
+        const { data, error } = await supabase
+          .from("branches")
+          .select("id, name, sort_order")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+
+        setBranches((data ?? []) as Branch[]);
+      } catch (err) {
+        console.error("Load branches error:", err);
         setError("تعذر تحميل الفروع المتاحة.");
-      })
-      .finally(() => setBranchesLoading(false));
+      } finally {
+        setBranchesLoading(false);
+      }
+    }
+
+    loadBranches();
   }, []);
 
   const subtotal = useMemo(
