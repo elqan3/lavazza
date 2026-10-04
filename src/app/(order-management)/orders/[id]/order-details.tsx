@@ -11,6 +11,7 @@ import {
   Phone,
   MapPin,
   Utensils,
+  Store,
   Package,
   CreditCard,
   Clock,
