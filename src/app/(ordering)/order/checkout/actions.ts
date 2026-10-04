@@ -10,6 +10,7 @@ type CheckoutItem = {
 type CreateOrderInput = {
   customerName: string;
   customerPhone: string;
+  branchId: string;
   orderType: "dine_in" | "pickup" | "delivery";
   paymentMethod: "bank_transfer" | "cash_on_delivery";
   customerNotes?: string;
@@ -49,6 +50,10 @@ export async function createGuestOrder(
     throw new Error("رقم الهاتف مطلوب.");
   }
 
+  if (!input.branchId) {
+    throw new Error("الفرع مطلوب.");
+  }
+
   if (!input.items.length) {
     throw new Error("السلة فارغة.");
   }
@@ -77,6 +82,7 @@ export async function createGuestOrder(
     {
       p_customer_name: input.customerName.trim(),
       p_customer_phone: input.customerPhone.trim(),
+      p_branch_id: input.branchId,
       p_order_type: input.orderType,
       p_payment_method: input.paymentMethod,
       p_tracking_token_hash: trackingTokenHash,
@@ -124,4 +130,23 @@ export async function createGuestOrder(
       result.payment_deadline,
     trackingToken,
   };
+}
+
+export async function getActiveBranches() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc(
+    "get_active_order_branches",
+  );
+
+  if (error) {
+    console.error("Load active branches error:", error);
+    throw new Error("تعذر تحميل الفروع المتاحة.");
+  }
+
+  return (data ?? []) as Array<{
+    id: string;
+    name: string;
+    sort_order: number;
+  }>;
 }
