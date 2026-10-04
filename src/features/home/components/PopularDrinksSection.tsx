@@ -17,7 +17,7 @@ export default function PopularDrinksSection() {
           </p>
           <h2 className="mt-3 text-3xl font-bold sm:text-4xl">الأكثر طلباً</h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-lavaza-primary/65 sm:text-base">
-            اختيارات عملائنا المفضّلة — محضّرة بعناية في كل زيارة
+            اختيارات محبوبة من لافازا — اطلبها مباشرة من المنيو.
           </p>
         </FadeIn>
 
@@ -41,23 +41,15 @@ export default function PopularDrinksSection() {
                 </div>
 
                 <div className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-bold">{drink.name}</h3>
-                      <p className="font-jakarta mt-1 text-xs uppercase tracking-wider text-lavaza-primary/50">
-                        {drink.nameEn}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-lavaza-gold/15 px-3 py-1 text-sm font-bold text-lavaza-primary">
-                      {drink.price}
-                    </span>
-                  </div>
-
+                  <h3 className="text-lg font-bold">{drink.name}</h3>
+                  <p className="font-jakarta mt-1 text-xs uppercase tracking-wider text-lavaza-primary/50">
+                    {drink.nameEn}
+                  </p>
                   <Link
-                    href="/menu"
+                    href="/order"
                     className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-lavaza-gold transition hover:text-lavaza-primary"
                   >
-                    التفاصيل
+                    اطلب الآن
                     <ArrowLeft size={16} />
                   </Link>
                 </div>
