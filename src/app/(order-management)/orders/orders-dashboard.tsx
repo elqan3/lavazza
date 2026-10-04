@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Search,
   ShoppingBag,
+  Store,
   Table2,
 } from "lucide-react";
 
@@ -184,9 +185,8 @@ export default function OrdersDashboard({
               >
                 إدارة الفروع
               </Link>
-            </div>
 
-            <button
+              <button
               type="button"
               onClick={refresh}
               disabled={loading}
@@ -199,7 +199,8 @@ export default function OrdersDashboard({
               )}
 
               تحديث
-            </button>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -385,6 +386,12 @@ function OrderRow({
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
+          <Info
+            label="الفرع"
+            value={order.branch_name}
+            icon={<Store />}
+          />
+
           <Info
             label="النوع"
             value={typeLabels[order.order_type]}
