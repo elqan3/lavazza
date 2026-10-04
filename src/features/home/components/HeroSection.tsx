@@ -45,7 +45,7 @@ export default function HeroSection() {
           <div className="relative overflow-hidden rounded-[2rem] bg-white p-3 shadow-[0_24px_60px_rgba(26,42,74,0.12)]">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem]">
               <Image
-                src="/menu/menu1.jpg"
+                src="/menu/back001.jpg"
                 alt="تجربة القهوة في لافازا"
                 fill
                 priority
