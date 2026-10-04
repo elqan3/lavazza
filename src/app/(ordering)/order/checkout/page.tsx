@@ -15,7 +15,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createGuestOrder } from "./actions";
+import { createGuestOrder, getActiveBranches } from "./actions";
 
 type CartItem = {
   product: {
@@ -36,6 +36,12 @@ type PaymentMethod =
   | "bank_transfer"
   | "cash_on_delivery";
 
+type Branch = {
+  id: string;
+  name: string;
+  sort_order: number;
+};
+
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("ar-LY", {
     minimumFractionDigits: 0,
@@ -53,6 +59,10 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash_on_delivery");
+
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(true);
+  const [branchId, setBranchId] = useState("");
 
   const [customerName, setCustomerName] =
     useState("");
@@ -91,6 +101,14 @@ export default function CheckoutPage() {
     } finally {
       setLoaded(true);
     }
+
+    getActiveBranches()
+      .then((data) => setBranches(data))
+      .catch((err) => {
+        console.error(err);
+        setError("تعذر تحميل الفروع المتاحة.");
+      })
+      .finally(() => setBranchesLoading(false));
   }, []);
 
   const subtotal = useMemo(
@@ -127,6 +145,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!branchId) {
+      setError("اختر الفرع من فضلك.");
+      return;
+    }
+
     if (
       orderType === "dine_in" &&
       !tableNumber.trim()
@@ -149,6 +172,7 @@ export default function CheckoutPage() {
       const result = await createGuestOrder({
         customerName,
         customerPhone,
+        branchId,
         orderType,
         paymentMethod,
         customerNotes,
@@ -319,11 +343,60 @@ export default function CheckoutPage() {
           </div>
         </section>
 
+        <section className="mt-8">
+          <SectionTitle
+            number="02"
+            title="اختر الفرع"
+          />
+
+          {branchesLoading ? (
+            <div className="flex h-24 items-center justify-center rounded-2xl bg-white ring-1 ring-black/5">
+              <Loader2 size={20} className="animate-spin text-neutral-400" />
+            </div>
+          ) : branches.length === 0 ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">
+              لا توجد فروع متاحة للطلب حاليًا.
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {branches.map((branch) => (
+                <button
+                  key={branch.id}
+                  type="button"
+                  onClick={() => setBranchId(branch.id)}
+                  className={`relative rounded-2xl p-4 text-right transition ${
+                    branchId === branch.id
+                      ? "bg-neutral-900 text-white shadow-lg"
+                      : "bg-white text-neutral-900 ring-1 ring-black/5 hover:ring-black/10"
+                  }`}
+                >
+                  {branchId === branch.id && (
+                    <span className="absolute left-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[#d6a756] text-white">
+                      <Check size={12} />
+                    </span>
+                  )}
+
+                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${
+                    branchId === branch.id ? "bg-white/10" : "bg-neutral-100"
+                  }`}>
+                    <Store size={20} />
+                  </div>
+
+                  <p className="text-sm font-black">{branch.name}</p>
+                  <p className={`mt-1 text-[10px] ${
+                    branchId === branch.id ? "text-white/50" : "text-neutral-400"
+                  }`}>الفرع الذي سيجهز طلبك</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Conditional location */}
         {orderType === "dine_in" && (
           <section className="mt-8">
             <SectionTitle
-              number="02"
+              number="03"
               title="رقم الطاولة"
             />
 
@@ -341,7 +414,7 @@ export default function CheckoutPage() {
         {orderType === "delivery" && (
           <section className="mt-8">
             <SectionTitle
-              number="02"
+              number="03"
               title="معلومات التوصيل"
             />
 
@@ -388,11 +461,7 @@ export default function CheckoutPage() {
         {/* Customer */}
         <section className="mt-8">
           <SectionTitle
-            number={
-              orderType === "dine_in"
-                ? "03"
-                : "02"
-            }
+            number="04"
             title="بياناتك"
           />
 
@@ -431,11 +500,7 @@ export default function CheckoutPage() {
         {/* Payment */}
         <section className="mt-8">
           <SectionTitle
-            number={
-              orderType === "dine_in"
-                ? "04"
-                : "03"
-            }
+            number="05"
             title="طريقة الدفع"
           />
 
@@ -479,11 +544,7 @@ export default function CheckoutPage() {
         {/* Summary */}
         <section className="mt-8">
           <SectionTitle
-            number={
-              orderType === "dine_in"
-                ? "05"
-                : "04"
-            }
+            number="06"
             title="مراجعة الطلب"
           />
 
