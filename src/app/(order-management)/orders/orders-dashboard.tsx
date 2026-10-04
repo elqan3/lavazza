@@ -177,6 +177,15 @@ export default function OrdersDashboard({
               </p>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/orders/branches"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-900"
+              >
+                إدارة الفروع
+              </Link>
+            </div>
+
             <button
               type="button"
               onClick={refresh}
@@ -375,7 +384,7 @@ function OrderRow({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
           <Info
             label="النوع"
             value={typeLabels[order.order_type]}
