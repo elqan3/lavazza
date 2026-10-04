@@ -577,6 +577,10 @@ export default function OrderDetails({
                     order.order_type
                   ] ?? order.order_type}
                 </span>
+
+                <span className="rounded-full bg-white/10 px-3 py-1 text-sm text-white/70">
+                  {order.branch_name || "—"}
+                </span>
               </div>
             </div>
 
