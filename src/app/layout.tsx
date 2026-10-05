@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import GlobalNavigation from "@/components/navigation/GlobalNavigation";
+import PWARegister from "@/components/pwa/PWARegister";
 
 const readexPro = Readex_Pro({
   subsets: ["arabic", "latin"],
@@ -37,6 +38,7 @@ export default function RootLayout({
         "
       >
         <AuthProvider>
+          <PWARegister />
           {children}
           <GlobalNavigation />
         </AuthProvider>
