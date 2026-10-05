@@ -12,7 +12,6 @@ import {
   Loader2,
   MapPin,
   Package,
-  Table2,
   Check,
 } from "lucide-react";
 
@@ -532,24 +531,6 @@ function OrderSuccessContent() {
           </h2>
 
           <div className="mt-4 space-y-4">
-            {order.orderType ===
-              "dine_in" &&
-              order.tableNumber && (
-                <div className="flex items-center gap-3">
-                  <Table2 className="h-5 w-5 text-neutral-500" />
-
-                  <div>
-                    <p className="text-xs text-neutral-500">
-                      رقم الطاولة
-                    </p>
-
-                    <p className="font-semibold">
-                      {order.tableNumber}
-                    </p>
-                  </div>
-                </div>
-              )}
-
             {order.orderType ===
               "delivery" &&
               order.deliveryAddress && (
