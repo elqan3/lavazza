@@ -14,7 +14,6 @@ type CreateOrderInput = {
   orderType: "dine_in" | "pickup" | "delivery";
   paymentMethod: "bank_transfer" | "cash_on_delivery";
   customerNotes?: string;
-  tableNumber?: string;
   deliveryAddress?: string;
   deliveryLocationNote?: string;
   items: CheckoutItem[];
@@ -62,13 +61,6 @@ export async function createGuestOrder(
   }
 
   if (
-    input.orderType === "dine_in" &&
-    !input.tableNumber?.trim()
-  ) {
-    return { ok: false, error: "رقم الطاولة مطلوب." };
-  }
-
-  if (
     input.orderType === "delivery" &&
     !input.deliveryAddress?.trim()
   ) {
@@ -95,10 +87,7 @@ export async function createGuestOrder(
       })),
       p_customer_notes:
         input.customerNotes?.trim() || null,
-      p_table_number:
-        input.orderType === "dine_in"
-          ? input.tableNumber?.trim() || null
-          : null,
+      p_table_number: null,
       p_delivery_address:
         input.orderType === "delivery"
           ? input.deliveryAddress?.trim() || null
