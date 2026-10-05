@@ -1,9 +1,3 @@
-
-export const metadata: Metadata = {
-  manifest: "/orders/manifest.webmanifest",
-  themeColor: "#111111",
-};
-
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -18,6 +12,11 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "./types";
+
+export const metadata: Metadata = {
+  manifest: "/orders/manifest.webmanifest",
+  themeColor: "#111111",
+};
 
 type RawManagementOrder = {
   order_id: string;
@@ -87,6 +86,5 @@ export default async function OrdersPage() {
   return (
     <OrdersDashboard
       initialOrders={orders}
-    />
   );
 }
