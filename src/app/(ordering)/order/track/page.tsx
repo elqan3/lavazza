@@ -646,23 +646,6 @@ function OrderTrackContent() {
           </h2>
 
           <div className="mt-4 space-y-4">
-            {order.orderType === "dine_in" &&
-              order.tableNumber && (
-                <div className="flex items-start gap-3">
-                  <Table2 className="mt-0.5 h-5 w-5 text-neutral-400" />
-
-                  <div>
-                    <p className="text-xs text-neutral-500">
-                      رقم الطاولة
-                    </p>
-
-                    <p className="mt-1 font-semibold">
-                      {order.tableNumber}
-                    </p>
-                  </div>
-                </div>
-              )}
-
             {order.orderType === "delivery" &&
               order.deliveryAddress && (
                 <div className="flex items-start gap-3">
