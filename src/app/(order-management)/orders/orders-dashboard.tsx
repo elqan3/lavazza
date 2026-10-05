@@ -180,6 +180,13 @@ export default function OrdersDashboard({
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
+                href="/orders/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-900"
+              >
+                الإحصائيات
+              </Link>
+
+              <Link
                 href="/orders/branches"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-900"
               >
