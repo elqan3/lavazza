@@ -118,7 +118,7 @@ export async function rejectBankTransfer(
 }
 export async function updateOrderStatus(
   orderId: string,
-  status: "preparing" | "ready" | "completed",
+  status: "confirmed" | "preparing" | "ready" | "completed",
   note?: string,
 ) {
   if (!orderId?.trim()) {
