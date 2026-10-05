@@ -12,7 +12,6 @@ import {
   MapPin,
   Package,
   RefreshCw,
-  Table2,
   Upload,
   X,
 } from "lucide-react";
