@@ -78,10 +78,7 @@ const orderProgressStatuses = [
 ] as const;
 
 type ProgressStatus =
-  Exclude<
-    (typeof orderProgressStatuses)[number],
-    "confirmed"
-  >;
+  (typeof orderProgressStatuses)[number];
 function getOrderStatusLabel(status: string) {
   switch (status) {
     case "pending":
