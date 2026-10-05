@@ -91,7 +91,7 @@ export default function ProductsClient({ initialProducts }: Props) {
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-neutral-100"><Package className="h-5 w-5 text-neutral-500" /></div>
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate font-black">{product.name}</h2>
-                  <p className="mt-1 truncate text-xs text-neutral-400">{product.category_name || "بدون قسم"} · {product.price.toFixed(2)} د.ل</p>
+                  <p className="mt-1 truncate text-xs text-neutral-400">{product.category_name || "بدون قسم"} · {Number(product.price).toFixed(2)} د.ل</p>
                 </div>
                 <button type="button" onClick={() => toggle(product)} disabled={pendingId === product.id} className={["flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-xs font-black transition disabled:opacity-50", product.is_available ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700"].join(" ")}>
                   {pendingId === product.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : product.is_available ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
