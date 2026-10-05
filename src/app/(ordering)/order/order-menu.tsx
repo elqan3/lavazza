@@ -620,8 +620,8 @@ function CartSheet({
         aria-label="إغلاق السلة"
       />
 
-      <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[2rem] bg-[#faf9f6] shadow-2xl sm:inset-y-0 sm:right-0 sm:left-auto sm:w-full sm:max-w-md sm:rounded-none sm:rounded-r-[2rem]">
-        <div className="flex h-full flex-col">
+      <div className="absolute inset-x-0 bottom-0 h-[88dvh] max-h-[88dvh] min-h-0 overflow-hidden rounded-t-[2rem] bg-[#faf9f6] shadow-2xl sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-none sm:w-full sm:max-w-md sm:rounded-none sm:rounded-r-[2rem]">
+        <div className="flex h-full min-h-0 flex-col">
           {/* Cart Header */}
           <div className="flex items-center justify-between border-b border-black/5 px-5 py-5">
             <div>
@@ -645,7 +645,7 @@ function CartSheet({
           </div>
 
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             {cart.length === 0 ? (
               <div className="flex min-h-64 flex-col items-center justify-center text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-neutral-300 shadow-sm">
