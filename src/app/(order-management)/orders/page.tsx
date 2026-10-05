@@ -1,4 +1,10 @@
 
+export const metadata: Metadata = {
+  manifest: "/orders/manifest.webmanifest",
+  themeColor: "#111111",
+};
+
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/services/supabase/server";
