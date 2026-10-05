@@ -71,9 +71,6 @@ export default function CheckoutPage() {
   const [customerPhone, setCustomerPhone] =
     useState("");
 
-  const [tableNumber, setTableNumber] =
-    useState("");
-
   const [deliveryAddress, setDeliveryAddress] =
     useState("");
 
@@ -165,14 +162,6 @@ export default function CheckoutPage() {
     }
 
     if (
-      orderType === "dine_in" &&
-      !tableNumber.trim()
-    ) {
-      setError("أدخل رقم الطاولة.");
-      return;
-    }
-
-    if (
       orderType === "delivery" &&
       !deliveryAddress.trim()
     ) {
@@ -190,7 +179,6 @@ export default function CheckoutPage() {
         orderType,
         paymentMethod,
         customerNotes,
-        tableNumber,
         deliveryAddress,
         deliveryLocationNote,
         items: cart.map((item) => ({
@@ -412,24 +400,6 @@ export default function CheckoutPage() {
         </section>
 
         {/* Conditional location */}
-        {orderType === "dine_in" && (
-          <section className="mt-8">
-            <SectionTitle
-              number="03"
-              title="رقم الطاولة"
-            />
-
-            <input
-              value={tableNumber}
-              onChange={(e) =>
-                setTableNumber(e.target.value)
-              }
-              placeholder="مثلاً: 12"
-              className="h-14 w-full rounded-2xl border border-black/5 bg-white px-4 text-sm font-bold outline-none transition focus:border-[#d6a756]/50 focus:ring-4 focus:ring-[#d6a756]/10"
-            />
-          </section>
-        )}
-
         {orderType === "delivery" && (
           <section className="mt-8">
             <SectionTitle
