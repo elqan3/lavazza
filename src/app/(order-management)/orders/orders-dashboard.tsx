@@ -202,6 +202,14 @@ export default function OrdersDashboard({
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
+                href="/orders/products"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white"
+              >
+                <Package className="h-4 w-4" />
+                إدارة المنتجات
+              </Link>
+
+              <Link
                 href="/orders/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-900"
               >
@@ -216,18 +224,18 @@ export default function OrdersDashboard({
               </Link>
 
               <button
-              type="button"
-              onClick={refresh}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
+                type="button"
+                onClick={refresh}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
 
-              تحديث
+                تحديث
               </button>
             </div>
           </div>
