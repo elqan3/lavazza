@@ -1,7 +1,13 @@
 import { createClient } from "@/services/supabase/server";
+import type { Metadata } from "next";
 import OrderMenu from "./order-menu";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  manifest: "/order/manifest.webmanifest",
+  themeColor: "#111111",
+};
 
 export default async function OrderPage() {
   const supabase = await createClient();
