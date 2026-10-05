@@ -86,5 +86,6 @@ export default async function OrdersPage() {
   return (
     <OrdersDashboard
       initialOrders={orders}
+    />
   );
 }
