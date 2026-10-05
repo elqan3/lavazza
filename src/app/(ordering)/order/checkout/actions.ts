@@ -127,7 +127,7 @@ export async function createGuestOrder(
   return {
     ok: true,
     orderId: result.order_id,
-    orderNumber: result.order_number,
+    orderNumber: Number(result.order_number),
     subtotal: Number(result.subtotal),
     total: Number(result.total),
     paymentDeadline:
