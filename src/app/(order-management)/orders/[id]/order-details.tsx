@@ -10,7 +10,6 @@ import {
   User,
   Phone,
   MapPin,
-  Utensils,
   Store,
   Package,
   CreditCard,
@@ -939,14 +938,6 @@ export default function OrderDetails({
               label="رقم الهاتف"
               value={order.customer_phone}
             />
-
-            {order.table_number && (
-              <InfoItem
-                icon={<Utensils size={17} />}
-                label="رقم الطاولة"
-                value={order.table_number}
-              />
-            )}
 
             {order.delivery_address && (
               <InfoItem
