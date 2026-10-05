@@ -199,6 +199,11 @@ export default function CheckoutPage() {
         })),
       });
 
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
       localStorage.setItem(
         "lavaza-order-token",
         result.trackingToken,
