@@ -41,35 +41,38 @@ async function sha256(value: string) {
 
 export async function createGuestOrder(
   input: CreateOrderInput,
-) {
+): Promise<
+  | { ok: true; orderId: string; orderNumber: number; subtotal: number; total: number; paymentDeadline: string | null; trackingToken: string }
+  | { ok: false; error: string }
+> {
   if (!input.customerName.trim()) {
-    throw new Error("الاسم مطلوب.");
+    return { ok: false, error: "الاسم مطلوب." };
   }
 
   if (!input.customerPhone.trim()) {
-    throw new Error("رقم الهاتف مطلوب.");
+    return { ok: false, error: "رقم الهاتف مطلوب." };
   }
 
   if (!input.branchId) {
-    throw new Error("الفرع مطلوب.");
+    return { ok: false, error: "الفرع مطلوب." };
   }
 
   if (!input.items.length) {
-    throw new Error("السلة فارغة.");
+    return { ok: false, error: "السلة فارغة." };
   }
 
   if (
     input.orderType === "dine_in" &&
     !input.tableNumber?.trim()
   ) {
-    throw new Error("رقم الطاولة مطلوب.");
+    return { ok: false, error: "رقم الطاولة مطلوب." };
   }
 
   if (
     input.orderType === "delivery" &&
     !input.deliveryAddress?.trim()
   ) {
-    throw new Error("عنوان التوصيل مطلوب.");
+    return { ok: false, error: "عنوان التوصيل مطلوب." };
   }
 
   const supabase = await createClient();
@@ -109,19 +112,20 @@ export async function createGuestOrder(
 
   if (error) {
     console.error("Create guest order error:", error);
-
-    throw new Error(
-      error.message || "تعذر إنشاء الطلب.",
-    );
+    return {
+      ok: false,
+      error: error.message || "تعذر إنشاء الطلب.",
+    };
   }
 
   const result = data?.[0];
 
   if (!result) {
-    throw new Error("تعذر إنشاء الطلب.");
+    return { ok: false, error: "تعذر إنشاء الطلب." };
   }
 
   return {
+    ok: true,
     orderId: result.order_id,
     orderNumber: result.order_number,
     subtotal: Number(result.subtotal),
