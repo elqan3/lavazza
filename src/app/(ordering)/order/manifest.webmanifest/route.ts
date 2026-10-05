@@ -14,12 +14,12 @@ export function GET() {
     theme_color: "#111111",
     icons: [
       {
-        src: "/logo.png",
+        src: "/pwa-icon.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/logo.png",
+        src: "/pwa-icon.png",
         sizes: "512x512",
         type: "image/png",
       },
