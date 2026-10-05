@@ -702,6 +702,45 @@ export default function OrderDetails({
             </div>
           )}
 
+          {/* Pending → Confirmed */}
+          {order.order_status ===
+            "pending" && (
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() =>
+                  handleOrderStatusChange(
+                    "confirmed",
+                  )
+                }
+                disabled={statusActionLoading}
+                className="
+                  flex
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  bg-[#d4af37]
+                  px-4
+                  py-3
+                  text-sm
+                  font-bold
+                  text-black
+                  transition
+                  hover:bg-[#e2c15a]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
+                <CheckCircle2 size={18} />
+                {statusActionLoading
+                  ? "جاري تأكيد الطلب..."
+                  : "تأكيد الطلب"}
+              </button>
+            </div>
+          )}
+
           {/* Confirmed → Preparing */}
           {order.order_status ===
             "confirmed" && (
