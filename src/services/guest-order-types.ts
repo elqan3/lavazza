@@ -23,7 +23,6 @@ export type GuestOrder = {
   customerPhone: string;
   customerNotes: string | null;
 
-  tableNumber: string | null;
   deliveryAddress: string | null;
   deliveryLocationNote: string | null;
 
