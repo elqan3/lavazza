@@ -63,7 +63,6 @@ export async function getGuestOrder(
     customerPhone: result.customer_phone,
     customerNotes: result.customer_notes,
 
-    tableNumber: result.table_number,
     deliveryAddress: result.delivery_address,
     deliveryLocationNote: result.delivery_location_note,
 
