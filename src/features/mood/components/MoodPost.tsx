@@ -1,129 +1,78 @@
 "use client";
-import LikeButton from "./LikeButton";
+
 import Image from "next/image";
 import Link from "next/link";
+import { Heart } from "lucide-react";
+
+import LikeButton from "./LikeButton";
+
 type Props = {
   post: {
     id: string;
     user_id: string;
     content: string;
-    image_url?: string;
+    image_url: string | null;
     created_at: string;
-    profiles?: {
-      full_name?: string;
-      avatar_url?: string;
-    };
+    profile: {
+      full_name: string | null;
+      avatar_url: string | null;
+    } | null;
+    likesCount: number;
+    liked: boolean;
   };
 };
+
 export default function MoodPost({ post }: Props) {
   return (
-  
-      <article
-className="
-bg-white/5
-backdrop-blur-sm
-rounded-3xl
-overflow-hidden
-border
-border-white/10
-shadow-lg
-"
->
-      {/* Header */}
-
-      <div className="
-flex
-items-center
-gap-3
-p-4
-">
-
-        <Link
-  href={`/profile/${post.user_id}`}
-  className="flex items-center gap-3 flex-1"
->
-
-  <Image
-    src={post.profiles?.avatar_url || "/avatar.png"}
-    alt=""
-    width={46}
-    height={46}
-    className="
-      rounded-full
-      object-cover
-      border
-      border-[#d4af37]
-    "
-  />
-
-  <div>
-
-    <h3 className="
-font-bold
-text-white
-text-sm
-">
-      {post.profiles?.full_name || "Lavaza Member"}
-    </h3>
-
-    <p className="
-text-[11px]
-text-white/50
-">
-      {new Date(post.created_at).toLocaleDateString("ar-LY")}
-    </p>
-
-  </div>
-
-</Link>
-
-      </div>
-
-      {/* Image */}
-
-      {post.image_url && (
-
+    <article className="overflow-hidden rounded-[1.6rem] border border-[#16284a]/8 bg-white shadow-sm">
+      <Link href={`/profile/${post.user_id}`} className="flex items-center gap-3 px-4 py-4">
         <Image
-          src={post.image_url}
+          src={post.profile?.avatar_url || "/avatar.png"}
           alt=""
-          width={700}
-          height={700}
-          className="
-w-full
-aspect-square
-object-cover
-"
+          width={44}
+          height={44}
+          className="h-11 w-11 rounded-full border border-[#b58b22]/30 object-cover"
         />
 
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold">
+            {post.profile?.full_name || "عضو Lavaza"}
+          </p>
+          <p className="mt-0.5 text-[11px] text-[#16284a]/45">
+            {new Date(post.created_at).toLocaleDateString("ar-LY", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+      </Link>
+
+      {post.image_url && (
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#f1eee7]">
+          <Image
+            src={post.image_url}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 576px"
+            className="object-cover"
+          />
+        </div>
       )}
 
-      {/* Caption */}
-
-      <div className="p-4">
-
-        <p
-          className="
-          text-white
-          leading-7
-          text-sm
-          "
-        >
+      <div className="px-4 pb-4 pt-4">
+        <p className="whitespace-pre-wrap text-sm leading-7 text-[#16284a]/85">
           {post.content}
         </p>
 
-        {/* Footer */}
-
-        <div className="
-mt-5
-pt-4
-border-t
-border-white/10
-">
-    <LikeButton postId={post.id} />
-</div>
-
+        <div className="mt-4 border-t border-[#16284a]/8 pt-3">
+          <LikeButton
+            postId={post.id}
+            initialCount={post.likesCount}
+            initialLiked={post.liked}
+          />
+        </div>
       </div>
-
     </article>
   );
 }
