@@ -1,15 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { supabase } from "@/services/supabase/client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ImagePlus,
-  Coffee,
-  ArrowRight,
-  X,
-} from "lucide-react";
+import { ArrowRight, Camera, Coffee, ImagePlus, X } from "lucide-react";
+
+import { supabase } from "@/services/supabase/client";
 
 export default function CreatePost() {
   const router = useRouter();
@@ -18,31 +13,55 @@ export default function CreatePost() {
   const [preview, setPreview] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
-    if (file) {
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("اختر ملف صورة صالحًا.");
+      return;
     }
+
+    if (file.size > 6 * 1024 * 1024) {
+      setError("حجم الصورة يجب أن يكون أقل من 6MB.");
+      return;
+    }
+
+    setError("");
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
   }
 
   function handleCancel() {
-    if (loading) return;
-
-    router.push("/mood-space");
+    if (!loading) router.push("/mood-space");
   }
 
   async function publishPost() {
     if (loading) return;
 
-    if (!image || !content.trim()) {
-      alert("أضف صورة ووصف");
+    const trimmed = content.trim();
+
+    if (!trimmed) {
+      setError("اكتب شيئًا قبل النشر.");
+      return;
+    }
+
+    if (trimmed.length > 500) {
+      setError("الحد الأقصى 500 حرف.");
       return;
     }
 
     setLoading(true);
+    setError("");
 
     const {
       data: { user },
@@ -53,275 +72,152 @@ export default function CreatePost() {
       return;
     }
 
-    const fileName = `${user.id}-${Date.now()}.jpg`;
+    let imageUrl: string | null = null;
+    let uploadedFileName: string | null = null;
 
-    const { error: uploadError } = await supabase.storage
-      .from("mood-images")
-      .upload(fileName, image);
+    if (image) {
+      const extension = image.name.split(".").pop()?.toLowerCase() || "jpg";
+      uploadedFileName = `${user.id}-${crypto.randomUUID()}.${extension}`;
 
-    if (uploadError) {
-      console.error(uploadError);
-      alert(uploadError.message);
-      setLoading(false);
-      return;
+      const { error: uploadError } = await supabase.storage
+        .from("mood-images")
+        .upload(uploadedFileName, image, {
+          contentType: image.type,
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("MOOD IMAGE UPLOAD ERROR:", uploadError);
+        setError("تعذر رفع الصورة. حاول مرة أخرى.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("mood-images")
+        .getPublicUrl(uploadedFileName);
+
+      imageUrl = urlData.publicUrl;
     }
 
-    const { data: urlData } = supabase.storage
-      .from("mood-images")
-      .getPublicUrl(fileName);
-
-    const { error: postError } = await supabase
-      .from("posts")
-      .insert({
-        user_id: user.id,
-        image_url: urlData.publicUrl,
-        content: content.trim(),
-      });
+    const { error: postError } = await supabase.from("posts").insert({
+      user_id: user.id,
+      image_url: imageUrl,
+      content: trimmed,
+    });
 
     if (postError) {
-      console.error(postError);
-      alert(postError.message);
+      console.error("MOOD POST ERROR:", postError);
+
+      if (uploadedFileName) {
+        await supabase.storage.from("mood-images").remove([uploadedFileName]);
+      }
+
+      setError("تعذر نشر اللحظة. حاول مرة أخرى.");
       setLoading(false);
       return;
     }
 
-    router.push("/mood-space");
+    router.replace("/mood-space");
+    router.refresh();
   }
 
   return (
     <main
       dir="rtl"
-      className="
-        min-h-[100dvh]
-        bg-[#0b1428]
-        text-white
-        px-4
-        sm:px-5
-        pt-5
-        pb-32
-      "
+      className="min-h-[100dvh] bg-[#f6f3ed] px-4 pb-10 pt-5 text-[#16284a]"
     >
-      {/* Header */}
-      <header
-        className="
-          max-w-md
-          mx-auto
-          flex
-          items-center
-          justify-between
-          mb-6
-        "
-      >
-        {/* Cancel / Back */}
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={loading}
-          className="
-            w-11
-            h-11
-            rounded-full
-            bg-white/10
-            border
-            border-white/10
-            flex
-            items-center
-            justify-center
-            text-white/80
-            hover:bg-white/15
-            transition
-            active:scale-95
-            disabled:opacity-40
-          "
-          aria-label="إلغاء"
-        >
-          <X size={21} />
-        </button>
-
-        <h1
-          className="
-            text-xl
-            font-bold
-            text-center
-          "
-        >
-          شارك لحظتك ☕
-        </h1>
-
-        {/* Spacer to keep title centered */}
-        <div className="w-11" />
-      </header>
-
-      {/* Content */}
-      <div
-        className="
-          max-w-md
-          mx-auto
-          space-y-5
-        "
-      >
-        {/* Image Picker */}
-        <label className="block cursor-pointer">
-          <div
-            className="
-              relative
-              aspect-square
-              w-full
-              rounded-3xl
-              overflow-hidden
-              border
-              border-white/10
-              bg-[#16284a]
-              flex
-              items-center
-              justify-center
-              shadow-xl
-            "
+      <div className="mx-auto w-full max-w-xl">
+        <header className="mb-7 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            aria-label="العودة"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#16284a]/10 bg-white transition active:scale-95 disabled:opacity-40"
           >
-            {preview ? (
-              <>
-                <Image
-                  src={preview}
-                  alt="معاينة الصورة"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 500px"
-                  className="object-cover"
-                />
+            <ArrowRight size={20} />
+          </button>
 
-                {/* Change image hint */}
-                <div
-                  className="
-                    absolute
-                    bottom-4
-                    right-4
-                    left-4
-                    bg-black/50
-                    backdrop-blur-md
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-center
-                    text-sm
-                    text-white/90
-                  "
-                >
-                  اضغط لتغيير الصورة
-                </div>
-              </>
-            ) : (
-              <div className="text-center text-white/60 px-5">
-                <ImagePlus
-                  size={45}
-                  className="
-                    mx-auto
-                    mb-3
-                    text-[#d4af37]
-                  "
-                />
-
-                <p className="font-medium">
-                  أضف صورة اللحظة
-                </p>
-
-                <p className="text-xs text-white/40 mt-2">
-                  اختر صورة من هاتفك
-                </p>
-              </div>
-            )}
+          <div className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b58b22]">
+              Lavaza
+            </p>
+            <h1 className="mt-1 text-xl font-bold">شارك لحظتك</h1>
           </div>
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImage}
-            className="hidden"
-          />
-        </label>
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            aria-label="إلغاء"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[#16284a]/45 transition hover:bg-white active:scale-95"
+          >
+            <X size={20} />
+          </button>
+        </header>
 
-        {/* Description */}
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="اكتب وصف اللحظة..."
-          maxLength={500}
-          className="
-            w-full
-            min-h-36
-            rounded-3xl
-            bg-white/10
-            border
-            border-white/10
-            p-5
-            text-white
-            placeholder:text-white/40
-            outline-none
-            resize-none
-            focus:border-[#d4af37]
-            transition
-          "
-        />
+        <section className="rounded-[1.75rem] border border-[#16284a]/8 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#16284a] text-[#d4af37]">
+              <Coffee size={19} />
+            </div>
+            <div>
+              <h2 className="font-bold">لحظة بسيطة تكفي</h2>
+              <p className="text-xs text-[#16284a]/50">الصورة اختيارية</p>
+            </div>
+          </div>
 
-        {/* Character Counter */}
-        <div
-          className="
-            text-left
-            text-xs
-            text-white/35
-            -mt-3
-            px-2
-          "
-        >
-          {content.length}/500
-        </div>
+          <label className="block cursor-pointer">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-dashed border-[#16284a]/12 bg-[#f6f3ed]">
+              {preview ? (
+                <>
+                  <img src={preview} alt="معاينة" className="h-full w-full object-cover" />
+                  <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-3 py-2 text-xs font-medium text-white">
+                    تغيير الصورة
+                  </span>
+                </>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+                  <ImagePlus className="text-[#b58b22]" size={38} />
+                  <p className="mt-3 text-sm font-semibold">أضف صورة إن أردت</p>
+                  <p className="mt-1 text-xs text-[#16284a]/45">JPG أو PNG حتى 6MB</p>
+                </div>
+              )}
+            </div>
 
-        {/* Publish Button */}
-        <button
-          type="button"
-          onClick={publishPost}
-          disabled={loading}
-          className="
-            w-full
-            min-h-[58px]
-            py-4
-            px-6
-            rounded-full
-            bg-[#d4af37]
-            text-[#16284a]
-            font-bold
-            text-lg
-            flex
-            items-center
-            justify-center
-            gap-2
-            active:scale-[0.98]
-            transition
-            shadow-lg
-            disabled:opacity-50
-            disabled:cursor-not-allowed
-          "
-        >
-          <Coffee size={22} />
+            <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
+          </label>
 
-          {loading ? "جاري النشر..." : "نشر اللحظة"}
-        </button>
+          <div className="mt-5">
+            <textarea
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder="ما الذي تريد مشاركته؟"
+              maxLength={500}
+              autoFocus
+              className="min-h-36 w-full resize-none rounded-2xl border border-[#16284a]/10 bg-[#f6f3ed] p-4 text-sm leading-7 outline-none transition placeholder:text-[#16284a]/35 focus:border-[#b58b22]"
+            />
+            <div className="mt-2 flex items-center justify-between px-1 text-xs text-[#16284a]/40">
+              <span>{error || "شارك شيئًا حقيقيًا من يومك."}</span>
+              <span>{content.length}/500</span>
+            </div>
+          </div>
 
-        {/* Cancel text for mobile */}
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={loading}
-          className="
-            w-full
-            py-3
-            text-sm
-            text-white/50
-            hover:text-white/80
-            transition
-            disabled:opacity-40
-          "
-        >
-          إلغاء والعودة إلى Mood Space
-        </button>
+          <button
+            type="button"
+            onClick={publishPost}
+            disabled={loading || !content.trim()}
+            className="mt-5 flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[#16284a] px-6 text-sm font-bold text-white transition hover:bg-[#20365f] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            <Coffee size={19} />
+            {loading ? "جاري النشر..." : "نشر اللحظة"}
+          </button>
+        </section>
       </div>
     </main>
   );
