@@ -33,7 +33,7 @@ export default async function LeaderboardPage() {
             <h1 className="text-sm font-black">المتصدرون</h1>
           </div>
 
-          <Link href={\`/profile/\${user.id}\`} aria-label="ملفي الشخصي" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#d4af37]/35 bg-[#f6f3ed]">
+          <Link href={`/profile/${user.id}`} aria-label="ملفي الشخصي" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#d4af37]/35 bg-[#f6f3ed]">
             <Image src={currentProfile?.avatar_url || "/avatar.png"} alt="" width={40} height={40} className="h-full w-full object-cover" />
           </Link>
         </header>
@@ -72,7 +72,7 @@ export default async function LeaderboardPage() {
               return (
                 <Link
                   key={profile.id}
-                  href={\`/profile/\${profile.id}\`}
+                  href={`/profile/${profile.id}`}
                   className={
                     "flex items-center gap-3 rounded-2xl border bg-white p-3 transition active:scale-[0.99] " +
                     (top ? "border-[#d4af37]/25" : "border-[#16284a]/8")
