@@ -10,10 +10,13 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: leaders, error } = await supabase
-    .from("leaderboard")
+  const [{ data: leaders, error }, { data: currentProfile }] = await Promise.all([
+    supabase
+      .from("leaderboard")
     .select("id, rank, points, full_name, username, avatar_url, login_streak")
-    .limit(10);
+      .limit(10),
+    supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
+  ]);
 
   const users = leaders ?? [];
 
@@ -31,7 +34,7 @@ export default async function LeaderboardPage() {
           </div>
 
           <Link href={\`/profile/\${user.id}\`} aria-label="ملفي الشخصي" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#d4af37]/35 bg-[#f6f3ed]">
-            <Image src="/avatar.png" alt="" width={40} height={40} className="h-full w-full object-cover" />
+            <Image src={currentProfile?.avatar_url || "/avatar.png"} alt="" width={40} height={40} className="h-full w-full object-cover" />
           </Link>
         </header>
 
