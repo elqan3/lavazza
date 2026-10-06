@@ -11,6 +11,20 @@ export default async function ProfilePosts({ userId }: Props) {
     .order("created_at", { ascending: false });
 
   const rows = posts ?? [];
+  const postIds = rows.map((post) => post.id);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  let likedPostIds = new Set<string>();
+
+  if (user && postIds.length > 0) {
+    const { data: likes } = await supabase
+      .from("likes")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .in("post_id", postIds);
+
+    likedPostIds = new Set((likes ?? []).map((like) => like.post_id));
+  }
 
   return (
     <section className="mx-auto w-full max-w-xl px-4 pb-12 pt-7">
@@ -28,7 +42,12 @@ export default async function ProfilePosts({ userId }: Props) {
             return (
               <ProfilePostCard
                 key={post.id}
-                post={{ ...post, profile, likesCount: likes }}
+                post={{
+                  ...post,
+                  profile,
+                  likesCount: likes,
+                  liked: likedPostIds.has(post.id),
+                }}
               />
             );
           })}
