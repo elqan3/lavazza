@@ -60,8 +60,30 @@ export default async function MoodFeed() {
   const rows = (posts ?? []) as MoodPostRow[];
   const postIds = rows.map((post) => post.id);
 
+  let profile: { avatar_url: string | null } | null = null;
   let likedPostIds = new Set<string>();
 
+  if (user) {
+    const [{ data: profileData }, { data: userLikes }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle(),
+      postIds.length > 0
+        ? supabase
+            .from("likes")
+            .select("post_id")
+            .eq("user_id", user.id)
+            .in("post_id", postIds)
+        : Promise.resolve({ data: [] as { post_id: string }[] }),
+    ]);
+
+    profile = profileData;
+    likedPostIds = new Set((userLikes ?? []).map((like) => like.post_id));
+  }
+
+  /*
   if (user && postIds.length > 0) {
     const { data: userLikes } = await supabase
       .from("likes")
@@ -71,6 +93,7 @@ export default async function MoodFeed() {
 
     likedPostIds = new Set((userLikes ?? []).map((like) => like.post_id));
   }
+  */
 
   return (
     <main
@@ -95,7 +118,13 @@ export default async function MoodFeed() {
               href={`/profile/${user.id}`}
               className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#b58b22]/40 bg-white"
             >
-              <ProfileAvatar userId={user.id} />
+              <Image
+                src={profile?.avatar_url || "/avatar.png"}
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 object-cover"
+              />
             </Link>
           ) : (
             <Link href="/auth" className="rounded-full bg-[#16284a] px-4 py-2 text-xs font-bold text-white">
@@ -185,21 +214,3 @@ export default async function MoodFeed() {
   );
 }
 
-async function ProfileAvatar({ userId }: { userId: string }) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
-
-  return (
-    <Image
-      src={data?.avatar_url || "/avatar.png"}
-      alt=""
-      width={40}
-      height={40}
-      className="h-10 w-10 object-cover"
-    />
-  );
-}
