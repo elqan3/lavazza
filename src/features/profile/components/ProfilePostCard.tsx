@@ -25,7 +25,7 @@ export default function ProfilePostCard({ post }: Props) {
 
   return (
     <article className="overflow-hidden rounded-[1.6rem] border border-[#16284a]/8 bg-white shadow-sm">
-      <Link href={\`/profile/\${post.user_id}\`} className="flex items-center gap-3 px-4 py-4">
+      <Link href={`/profile/${post.user_id}`} className="flex items-center gap-3 px-4 py-4">
         <Image src={post.profile?.avatar_url || "/avatar.png"} alt="" width={44} height={44} className="h-11 w-11 rounded-full border border-[#b58b22]/30 object-cover" />
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-[#16284a]">{post.profile?.full_name || "عضو Lavaza"}</p>
