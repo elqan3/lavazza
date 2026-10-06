@@ -15,6 +15,7 @@ type Props = {
     created_at: string;
     profile?: { full_name: string | null; avatar_url: string | null } | null;
     likesCount: number;
+    liked: boolean;
   };
 };
 
@@ -44,7 +45,7 @@ export default function ProfilePostCard({ post }: Props) {
         <p className="whitespace-pre-wrap text-sm leading-7 text-[#16284a]/85">{post.content}</p>
 
         <div className="mt-4 flex items-center justify-between border-t border-[#16284a]/8 pt-3">
-          <LikeButton postId={post.id} initialCount={post.likesCount} initialLiked={false} />
+          <LikeButton postId={post.id} initialCount={post.likesCount} initialLiked={post.liked} />
           {isOwner && <DeletePostButton postId={post.id} imageUrl={post.image_url} />}
         </div>
       </div>
