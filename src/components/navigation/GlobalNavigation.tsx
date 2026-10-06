@@ -6,19 +6,9 @@ import BottomNav from "./BottomNav";
 export default function GlobalNavigation() {
   const pathname = usePathname();
 
-  const hiddenRoutes = [
-    "/login",
-    "/auth",
-    "/admin",
-  ];
-
-  const shouldHide = hiddenRoutes.some(
-    (route) =>
-      pathname === route ||
-      pathname.startsWith(`${route}/`)
-  );
-
-  if (shouldHide) {
+  // Mood Space has its own navigation. Keep the bottom nav
+  // scoped to the feed instead of making it global across Lavaza.
+  if (!pathname.startsWith("/mood-space")) {
     return null;
   }
 
