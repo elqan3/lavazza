@@ -83,18 +83,6 @@ export default async function MoodFeed() {
     likedPostIds = new Set((userLikes ?? []).map((like) => like.post_id));
   }
 
-  /*
-  if (user && postIds.length > 0) {
-    const { data: userLikes } = await supabase
-      .from("likes")
-      .select("post_id")
-      .eq("user_id", user.id)
-      .in("post_id", postIds);
-
-    likedPostIds = new Set((userLikes ?? []).map((like) => like.post_id));
-  }
-  */
-
   return (
     <main
       dir="rtl"
