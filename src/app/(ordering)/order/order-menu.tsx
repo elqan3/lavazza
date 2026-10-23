@@ -52,8 +52,43 @@ export default function OrderMenu({
 }: Props) {
   const router = useRouter();
 
+  // Keep the requested categories first; leave the remaining categories
+  // in their existing order, with occasions always at the end.
+  const orderedCategories = useMemo(() => {
+    const preferredOrder = [
+      "عصائر",
+      "بارد",
+      "ساخن",
+      "كريب",
+      "بريوش",
+      "ميني بانكيك",
+      "ميلك شيك",
+    ];
+    const priority = new Map(
+      preferredOrder.map((name, index) => [name, index]),
+    );
+
+    return [...categories].sort((a, b) => {
+      const aIsOccasions = ["المناسبات", "مناسبات"].includes(a.name.trim());
+      const bIsOccasions = ["المناسبات", "مناسبات"].includes(b.name.trim());
+
+      if (aIsOccasions !== bIsOccasions) {
+        return aIsOccasions ? 1 : -1;
+      }
+
+      const aPriority = priority.get(a.name.trim()) ?? Number.MAX_SAFE_INTEGER;
+      const bPriority = priority.get(b.name.trim()) ?? Number.MAX_SAFE_INTEGER;
+
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+
+      return a.sort_order - b.sort_order;
+    });
+  }, [categories]);
+
   const [activeCategory, setActiveCategory] = useState(
-    categories[0]?.id ?? "",
+    orderedCategories[0]?.id ?? "",
   );
 
   const [search, setSearch] = useState("");
@@ -320,7 +355,7 @@ export default function OrderMenu({
       <nav className="sticky top-20 z-30 mt-5 border-y border-black/5 bg-[#faf9f6]/95 py-3 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
-            {categories.map((category) => (
+            {orderedCategories.map((category) => (
               <button
                 key={category.id}
                 type="button"
@@ -368,7 +403,7 @@ export default function OrderMenu({
           </>
         ) : (
           <div className="space-y-14">
-            {categories.map((category) => {
+            {orderedCategories.map((category) => {
               const categoryProducts = products.filter(
                 (product) =>
                   product.category_id === category.id,
