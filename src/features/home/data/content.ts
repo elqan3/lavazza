@@ -24,7 +24,6 @@ export const navLinks = [
   { label: "الرئيسية", href: "#hero" },
   { label: "اطلب الآن", href: "/order" },
   { label: "المنيو", href: "/menu" },
-  { label: "مساحة لافازا", href: "/mood-space" },
   { label: "تواصل", href: "#contact" },
 ];
 
