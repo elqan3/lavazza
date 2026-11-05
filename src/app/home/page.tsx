@@ -3,7 +3,6 @@ import HeroSection from "@/features/home/components/HeroSection";
 import PopularDrinksSection from "@/features/home/components/PopularDrinksSection";
 import WhyLavazaSection from "@/features/home/components/WhyLavazaSection";
 import AboutSection from "@/features/home/components/AboutSection";
-import MoodSpacePreview from "@/features/home/components/MoodSpacePreview";
 import ContactSection from "@/features/home/components/ContactSection";
 import Footer from "@/features/home/components/Footer";
 
@@ -16,7 +15,6 @@ export default function HomePage() {
         <PopularDrinksSection />
         <WhyLavazaSection />
         <AboutSection />
-        <MoodSpacePreview />
         <ContactSection />
       </main>
       <Footer />
