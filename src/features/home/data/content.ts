@@ -69,6 +69,5 @@ export const contactInfo = {
 export const footerLinks = [
   { label: "اطلب الآن", href: "/order" },
   { label: "المنيو", href: "/menu" },
-  { label: "مساحة لافازا", href: "/mood-space" },
   { label: "تواصل", href: "#contact" },
 ];
