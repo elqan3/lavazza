@@ -9,7 +9,10 @@ export async function middleware(
   request: NextRequest,
 ) {
   // Mood Space is temporarily paused while it is redesigned as a loyalty community.
-  if (request.nextUrl.pathname.startsWith("/mood-space")) {
+  if (
+    request.nextUrl.pathname === "/mood-space" ||
+    request.nextUrl.pathname.startsWith("/mood-space/")
+  ) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
