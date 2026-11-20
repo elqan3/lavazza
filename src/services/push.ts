@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 
 type StoredSubscription = {
   id: string;
+  user_id: string;
   endpoint: string;
   p256dh: string;
   auth: string;
@@ -209,10 +210,25 @@ export async function sendStaffOrderPush(orderId: string, orderNumber: number) {
 
   const { data: subscriptions, error: subscriptionsError } = await admin
     .from("staff_push_subscriptions")
-    .select("id, endpoint, p256dh, auth");
+    .select("id, user_id, endpoint, p256dh, auth");
 
   if (subscriptionsError) throw subscriptionsError;
   if (!subscriptions?.length) return;
+
+  const userIds = Array.from(new Set(subscriptions.map((item) => item.user_id)));
+  const { data: activeStaff, error: rolesError } = await admin
+    .from("order_user_roles")
+    .select("user_id")
+    .in("user_id", userIds)
+    .in("role", ["staff", "manager", "owner"]);
+
+  if (rolesError) throw rolesError;
+  const activeStaffIds = new Set((activeStaff ?? []).map((item) => item.user_id));
+  const eligibleSubscriptions = (subscriptions as StoredSubscription[]).filter(
+    (subscription) => activeStaffIds.has(subscription.user_id),
+  );
+
+  if (!eligibleSubscriptions.length) return;
 
   const vapid = { publicKey, privateKey, subject };
   const notification = JSON.stringify({
@@ -224,7 +240,7 @@ export async function sendStaffOrderPush(orderId: string, orderNumber: number) {
   });
 
   await Promise.all(
-    (subscriptions as StoredSubscription[]).map(async (subscription) => {
+    eligibleSubscriptions.map(async (subscription) => {
       try {
         await sendWebPush(subscription, notification, vapid);
       } catch (error) {
