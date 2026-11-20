@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Clock3,
@@ -25,6 +25,8 @@ import type {
   ManagementOrder,
   OrderStatus,
 } from "./types";
+import { supabase } from "@/services/supabase/client";
+import PushNotificationManager from "@/components/pwa/PushNotificationManager";
 
 type Props = {
   initialOrders: ManagementOrder[];
@@ -91,6 +93,28 @@ function getStatusClass(status: OrderStatus) {
   }
 }
 
+function playNewOrderSound() {
+  try {
+    const AudioContextConstructor = window.AudioContext;
+    if (!AudioContextConstructor) return;
+    const context = new AudioContextConstructor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.28);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.3);
+    void context.close();
+  } catch (error) {
+    console.warn("New-order sound could not play:", error);
+  }
+}
+
 export default function OrdersDashboard({
   initialOrders,
 }: Props) {
@@ -108,6 +132,8 @@ export default function OrdersDashboard({
 
   const [actionOrderId, setActionOrderId] =
     useState<string | null>(null);
+
+  const seenOrderIds = useRef(new Set(initialOrders.map((order) => order.order_id)));
 
   async function refresh() {
     setLoading(true);
@@ -144,6 +170,42 @@ export default function OrdersDashboard({
       setActionOrderId(null);
     }
   }
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshFromRealtime() {
+      try {
+        const latest = await loadManagementOrders(status, search);
+        if (active) setOrders(latest);
+      } catch (error) {
+        console.error("Realtime orders refresh failed:", error);
+      }
+    }
+
+    const channel = supabase
+      .channel("lavaza:staff:orders")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        const inserted = payload.new as { id?: string };
+        if (inserted.id && !seenOrderIds.current.has(inserted.id)) {
+          seenOrderIds.current.add(inserted.id);
+          playNewOrderSound();
+        }
+        void refreshFromRealtime();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => {
+        void refreshFromRealtime();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "payments" }, () => {
+        void refreshFromRealtime();
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [status, search]);
 
   const operationalOrders = useMemo(
     () => orders.filter((order) => ["pending","awaiting_payment","confirmed","preparing","ready"].includes(order.order_status)),
@@ -222,6 +284,8 @@ export default function OrdersDashboard({
               >
                 إدارة الفروع
               </Link>
+
+              <PushNotificationManager />
 
               <button
                 type="button"
