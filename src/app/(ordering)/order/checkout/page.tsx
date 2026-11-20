@@ -120,6 +120,17 @@ export default function CheckoutPage() {
     }
 
     loadBranches();
+
+    const channel = supabase
+      .channel("lavaza:checkout:branches")
+      .on("broadcast", { event: "catalog_changed" }, () => {
+        void loadBranches();
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   const subtotal = useMemo(
