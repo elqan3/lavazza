@@ -104,11 +104,12 @@ export default function PushNotificationManager() {
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
-        await fetch("/api/push-subscription", {
+        const response = await fetch("/api/push-subscription", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ endpoint: subscription.endpoint }),
         });
+        if (!response.ok) throw new Error("تعذر حذف الاشتراك من الخادم.");
         await subscription.unsubscribe();
       }
 
