@@ -24,6 +24,7 @@ import {
   verifyBankTransfer,
   rejectBankTransfer,
   updateOrderStatus,
+  rejectOrder,
 } from "./actions";
 
 type TimelineEvent = {
@@ -284,6 +285,12 @@ export default function OrderDetails({
   const [statusActionError, setStatusActionError] =
     useState<string | null>(null);
 
+  const [showOrderRejectionForm, setShowOrderRejectionForm] =
+    useState(false);
+
+  const [orderRejectionReason, setOrderRejectionReason] =
+    useState("");
+
   const timelineEvents = useMemo<TimelineEvent[]>(() => {
     const orderEvents: TimelineEvent[] =
       history.map((event: any) => ({
@@ -499,6 +506,35 @@ export default function OrderDetails({
     }
   }
 
+  async function handleRejectOrder() {
+    if (!order.id) {
+      setStatusActionError("معرّف الطلب غير موجود.");
+      return;
+    }
+
+    const reason = orderRejectionReason.trim();
+    if (!reason) {
+      setStatusActionError("يجب كتابة سبب رفض الطلب.");
+      return;
+    }
+
+    try {
+      setStatusActionLoading(true);
+      setStatusActionError(null);
+      await rejectOrder(order.id, reason);
+      setOrderRejectionReason("");
+      setShowOrderRejectionForm(false);
+      router.refresh();
+    } catch (error) {
+      console.error("Reject order action error:", error);
+      setStatusActionError(
+        error instanceof Error ? error.message : "تعذر رفض الطلب.",
+      );
+    } finally {
+      setStatusActionLoading(false);
+    }
+  }
+
   const canReviewPayment =
     order.payment_method ===
       "bank_transfer" &&
@@ -698,42 +734,76 @@ export default function OrderDetails({
             </div>
           )}
 
-          {/* Pending → Confirmed */}
-          {order.order_status ===
-            "pending" && (
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() =>
-                  handleOrderStatusChange(
-                    "confirmed",
-                  )
-                }
-                disabled={statusActionLoading}
-                className="
-                  flex
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-xl
-                  bg-[#d4af37]
-                  px-4
-                  py-3
-                  text-sm
-                  font-bold
-                  text-black
-                  transition
-                  hover:bg-[#e2c15a]
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
-              >
-                <CheckCircle2 size={18} />
-                {statusActionLoading
-                  ? "جاري تأكيد الطلب..."
-                  : "تأكيد الطلب"}
-              </button>
+          {/* Pending order actions */}
+          {order.order_status === "pending" && (
+            <div className="mt-5 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => handleOrderStatusChange("confirmed")}
+                  disabled={statusActionLoading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-bold text-black transition hover:bg-[#e2c15a] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <CheckCircle2 size={18} />
+                  {statusActionLoading ? "جاري تنفيذ العملية..." : "تأكيد الطلب"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusActionError(null);
+                    setShowOrderRejectionForm((visible) => !visible);
+                  }}
+                  disabled={statusActionLoading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <XCircle size={18} />
+                  رفض الطلب
+                </button>
+              </div>
+
+              {showOrderRejectionForm && (
+                <div className="space-y-3 rounded-xl border border-red-400/20 bg-red-400/5 p-4">
+                  <label htmlFor="order-rejection-reason" className="block text-sm font-semibold text-white">
+                    سبب رفض الطلب
+                  </label>
+                  <textarea
+                    id="order-rejection-reason"
+                    value={orderRejectionReason}
+                    onChange={(event) => setOrderRejectionReason(event.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    placeholder="اكتب سبباً واضحاً ليظهر للزبون في صفحة متابعة الطلب..."
+                    className="w-full resize-y rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-red-400/50"
+                    disabled={statusActionLoading}
+                  />
+                  <p className="text-left text-xs text-white/40">
+                    {orderRejectionReason.length}/500
+                  </p>
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOrderRejectionForm(false);
+                        setOrderRejectionReason("");
+                        setStatusActionError(null);
+                      }}
+                      disabled={statusActionLoading}
+                      className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/70 hover:bg-white/5 disabled:opacity-50"
+                    >
+                      تراجع
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRejectOrder}
+                      disabled={statusActionLoading || !orderRejectionReason.trim()}
+                      className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {statusActionLoading ? "جاري رفض الطلب..." : "تأكيد رفض الطلب"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
