@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, Suspense, useEffect, useState } from "react";
+import { ChangeEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -24,6 +24,7 @@ import {
 
 import type { GuestOrder } from "@/services/guest-order-types";
 import { loadGuestOrder } from "./actions";
+import { supabase } from "@/services/supabase/client";
 
 function getOrderStatusLabel(status: string) {
   const labels: Record<string, string> = {
@@ -101,7 +102,7 @@ function OrderTrackContent() {
 
   const orderNumber = searchParams.get("order");
 
-  async function loadOrder(showRefresh = false) {
+  const loadOrder = useCallback(async (showRefresh = false) => {
     try {
       if (showRefresh) {
         setRefreshing(true);
@@ -140,11 +141,61 @@ function OrderTrackContent() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    loadOrder();
-  }, []);
+    void loadOrder();
+  }, [loadOrder]);
+
+  useEffect(() => {
+    let active = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function connectToOrderUpdates() {
+      try {
+        const orderId = localStorage.getItem("lavaza-order-id");
+        const trackingToken = localStorage.getItem("lavaza-order-token");
+        if (!orderId || !trackingToken) return;
+
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(trackingToken),
+        );
+        const trackingHash = Array.from(new Uint8Array(digest))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        if (!active) return;
+
+        channel = supabase
+          .channel(`lavaza:track:${orderId}:${trackingHash}`)
+          .on("broadcast", { event: "order_changed" }, () => {
+            if (active) void loadOrder(true);
+          })
+          .subscribe();
+      } catch (error) {
+        console.error("Order realtime connection failed:", error);
+      }
+    }
+
+    void connectToOrderUpdates();
+
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void loadOrder(true);
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void loadOrder(true);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(fallbackRefresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [loadOrder]);
 
   useEffect(() => {
     return () => {

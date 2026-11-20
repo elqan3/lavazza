@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Clock3,
@@ -25,6 +25,8 @@ import type {
   ManagementOrder,
   OrderStatus,
 } from "./types";
+import { supabase } from "@/services/supabase/client";
+import PushNotificationManager from "@/components/pwa/PushNotificationManager";
 
 type Props = {
   initialOrders: ManagementOrder[];
@@ -91,6 +93,34 @@ function getStatusClass(status: OrderStatus) {
   }
 }
 
+function playNewOrderSound() {
+  try {
+    const AudioContextConstructor = window.AudioContext;
+    if (!AudioContextConstructor) return;
+    const context = new AudioContextConstructor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.28);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.onended = () => {
+      void context.close();
+    };
+    void context.resume().then(() => {
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.3);
+    }).catch(() => {
+      void context.close();
+    });
+  } catch (error) {
+    console.warn("New-order sound could not play:", error);
+  }
+}
+
 export default function OrdersDashboard({
   initialOrders,
 }: Props) {
@@ -108,6 +138,9 @@ export default function OrdersDashboard({
 
   const [actionOrderId, setActionOrderId] =
     useState<string | null>(null);
+  const [newOrderNotice, setNewOrderNotice] = useState(false);
+
+  const seenOrderIds = useRef(new Set(initialOrders.map((order) => order.order_id)));
 
   async function refresh() {
     setLoading(true);
@@ -144,6 +177,62 @@ export default function OrdersDashboard({
       setActionOrderId(null);
     }
   }
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshFromRealtime() {
+      try {
+        const latest = await loadManagementOrders(status, search);
+        if (active) setOrders(latest);
+      } catch (error) {
+        console.error("Realtime orders refresh failed:", error);
+      }
+    }
+
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshFromRealtime();
+    }, 30000);
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "LAVAZA_ORDER_PUSH") return;
+      const orderId = typeof event.data.orderId === "string" ? event.data.orderId : "";
+      if (orderId && !seenOrderIds.current.has(orderId)) {
+        seenOrderIds.current.add(orderId);
+        setNewOrderNotice(true);
+        playNewOrderSound();
+      }
+      void refreshFromRealtime();
+    };
+
+    navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
+
+    const channel = supabase
+      .channel("lavaza:staff:orders")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        const inserted = payload.new as { id?: string };
+        if (inserted.id && !seenOrderIds.current.has(inserted.id)) {
+          seenOrderIds.current.add(inserted.id);
+          setNewOrderNotice(true);
+          playNewOrderSound();
+        }
+        void refreshFromRealtime();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => {
+        void refreshFromRealtime();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "payments" }, () => {
+        void refreshFromRealtime();
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      window.clearInterval(fallbackRefresh);
+      navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
+      void supabase.removeChannel(channel);
+    };
+  }, [status, search]);
 
   const operationalOrders = useMemo(
     () => orders.filter((order) => ["pending","awaiting_payment","confirmed","preparing","ready"].includes(order.order_status)),
@@ -223,6 +312,8 @@ export default function OrdersDashboard({
                 إدارة الفروع
               </Link>
 
+              <PushNotificationManager />
+
               <button
                 type="button"
                 onClick={refresh}
@@ -240,6 +331,22 @@ export default function OrdersDashboard({
             </div>
           </div>
         </section>
+
+        {newOrderNotice && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-900"
+          >
+            <span>وصل طلب جديد. تم تحديث قائمة الطلبات تلقائياً.</span>
+            <button
+              type="button"
+              onClick={() => setNewOrderNotice(false)}
+              className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-bold text-emerald-900"
+            >
+              إغلاق
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -271,7 +378,7 @@ export default function OrdersDashboard({
         {/* Today Operations */}
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3 px-1"><div><h2 className="text-xl font-black text-neutral-900">تشغيل اليوم</h2><p className="mt-1 text-sm text-neutral-500">الطلبات التي تحتاج متابعة الآن.</p></div><span className="rounded-full bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white">{operationalOrders.length} نشط</span></div>
-          {operationalOrders.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center shadow-sm"><p className="font-bold text-neutral-900">لا توجد طلبات نشطة الآن</p><p className="mt-1 text-sm text-neutral-500">عندما يصل طلب جديد سيظهر هنا بعد التحديث.</p></div> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {operationalOrders.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center shadow-sm"><p className="font-bold text-neutral-900">لا توجد طلبات نشطة الآن</p><p className="mt-1 text-sm text-neutral-500">سيظهر أي طلب جديد هنا تلقائياً فور وصوله.</p></div> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <OperationColumn title="تحتاج إجراء" orders={operationalOrders.filter((o)=>o.order_status==="pending"||o.order_status==="awaiting_payment"||o.payment_status==="pending_verification")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>
             <OperationColumn title="تم التأكيد" orders={operationalOrders.filter((o)=>o.order_status==="confirmed")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>
             <OperationColumn title="جاري التحضير" orders={operationalOrders.filter((o)=>o.order_status==="preparing")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>

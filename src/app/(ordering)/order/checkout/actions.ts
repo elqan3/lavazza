@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/services/supabase/server";
+import { sendStaffOrderPush } from "@/services/push";
 
 type CheckoutItem = {
   productId: string;
@@ -111,6 +112,13 @@ export async function createGuestOrder(
 
   if (!result) {
     return { ok: false, error: "تعذر إنشاء الطلب." };
+  }
+
+  try {
+    await sendStaffOrderPush(result.order_id, Number(result.order_number));
+  } catch (notificationError) {
+    // Push delivery must never turn a successfully created order into a failed checkout.
+    console.error("Staff push notification failed:", notificationError);
   }
 
   return {

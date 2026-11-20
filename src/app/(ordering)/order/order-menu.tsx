@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/services/supabase/client";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -51,6 +52,24 @@ export default function OrderMenu({
   products,
 }: Props) {
   const router = useRouter();
+
+  useEffect(() => {
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60000);
+
+    const channel = supabase
+      .channel("lavaza:public:catalog")
+      .on("broadcast", { event: "catalog_changed" }, () => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      window.clearInterval(fallbackRefresh);
+      void supabase.removeChannel(channel);
+    };
+  }, [router]);
 
   // Keep the requested categories first; leave the remaining categories
   // in their existing order, with occasions always at the end.
