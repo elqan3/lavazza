@@ -217,6 +217,7 @@ export async function sendStaffOrderPush(orderId: string, orderNumber: number) {
   const vapid = { publicKey, privateKey, subject };
   const notification = JSON.stringify({
     title: "طلب جديد في لافازا",
+    orderId,
     body: "وصل طلب جديد رقم #" + orderNumber + ". افتح لوحة الطلبات لمراجعته.",
     url: "/orders",
     tag: "lavaza-order-" + orderId,
