@@ -69,6 +69,10 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       }
     }
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshLiveStats();
+    }, 60000);
+
     const channel = supabase
       .channel("lavaza:staff:dashboard")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => {
@@ -84,6 +88,7 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
 
     return () => {
       active = false;
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, [days]);
