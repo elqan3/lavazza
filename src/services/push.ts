@@ -165,6 +165,7 @@ async function sendWebPush(
       Urgency: "high",
     },
     body,
+    signal: AbortSignal.timeout(5000),
   });
 
   if (response.status === 404 || response.status === 410) {
