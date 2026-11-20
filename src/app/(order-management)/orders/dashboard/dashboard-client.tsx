@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/services/supabase/client";
 import {
   ArrowRight,
   BarChart3,
@@ -53,6 +54,39 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       alert(e instanceof Error ? e.message : "تعذر تحديث الإحصائيات.");
     } finally { setLoading(false); }
   }
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshLiveStats() {
+      try {
+        const res = await fetch("/api/order-dashboard?days=" + days, { cache: "no-store" });
+        if (!res.ok) return;
+        const latest = await res.json();
+        if (active) setData(latest);
+      } catch (error) {
+        console.error("Realtime dashboard refresh failed:", error);
+      }
+    }
+
+    const channel = supabase
+      .channel("lavaza:staff:dashboard")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => {
+        void refreshLiveStats();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => {
+        void refreshLiveStats();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "payments" }, () => {
+        void refreshLiveStats();
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [days]);
 
   const maxRevenue = useMemo(() => Math.max(...data.daily.map(x => Number(x.revenue)), 1), [data.daily]);
   const maxProductQty = Math.max(...data.products.map(x => x.quantity), 1);
