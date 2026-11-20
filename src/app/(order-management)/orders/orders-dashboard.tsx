@@ -107,9 +107,13 @@ function playNewOrderSound() {
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.28);
     oscillator.connect(gain);
     gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.3);
-    void context.close();
+    oscillator.onended = () => {
+      void context.close();
+    };
+    void context.resume().then(() => {
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.3);
+    });
   } catch (error) {
     console.warn("New-order sound could not play:", error);
   }
@@ -183,6 +187,10 @@ export default function OrdersDashboard({
       }
     }
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshFromRealtime();
+    }, 30000);
+
     const channel = supabase
       .channel("lavaza:staff:orders")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
@@ -203,6 +211,7 @@ export default function OrdersDashboard({
 
     return () => {
       active = false;
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, [status, search]);
@@ -335,7 +344,7 @@ export default function OrdersDashboard({
         {/* Today Operations */}
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3 px-1"><div><h2 className="text-xl font-black text-neutral-900">تشغيل اليوم</h2><p className="mt-1 text-sm text-neutral-500">الطلبات التي تحتاج متابعة الآن.</p></div><span className="rounded-full bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white">{operationalOrders.length} نشط</span></div>
-          {operationalOrders.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center shadow-sm"><p className="font-bold text-neutral-900">لا توجد طلبات نشطة الآن</p><p className="mt-1 text-sm text-neutral-500">عندما يصل طلب جديد سيظهر هنا بعد التحديث.</p></div> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {operationalOrders.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center shadow-sm"><p className="font-bold text-neutral-900">لا توجد طلبات نشطة الآن</p><p className="mt-1 text-sm text-neutral-500">سيظهر أي طلب جديد هنا تلقائياً فور وصوله.</p></div> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <OperationColumn title="تحتاج إجراء" orders={operationalOrders.filter((o)=>o.order_status==="pending"||o.order_status==="awaiting_payment"||o.payment_status==="pending_verification")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>
             <OperationColumn title="تم التأكيد" orders={operationalOrders.filter((o)=>o.order_status==="confirmed")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>
             <OperationColumn title="جاري التحضير" orders={operationalOrders.filter((o)=>o.order_status==="preparing")} actionOrderId={actionOrderId} onAdvance={advanceOrder}/>
