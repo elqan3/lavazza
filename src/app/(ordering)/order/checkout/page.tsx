@@ -121,6 +121,10 @@ export default function CheckoutPage() {
 
     loadBranches();
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void loadBranches();
+    }, 60000);
+
     const channel = supabase
       .channel("lavaza:checkout:branches")
       .on("broadcast", { event: "catalog_changed" }, () => {
@@ -129,6 +133,7 @@ export default function CheckoutPage() {
       .subscribe();
 
     return () => {
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, []);
