@@ -145,3 +145,34 @@ export async function updateOrderStatus(
 
   return data?.[0] ?? null;
 }
+
+export async function rejectOrder(
+  orderId: string,
+  reason: string,
+) {
+  if (!orderId?.trim()) {
+    throw new Error("معرّف الطلب غير صالح.");
+  }
+
+  const normalizedReason = reason?.trim();
+  if (!normalizedReason) {
+    throw new Error("يجب إدخال سبب رفض الطلب.");
+  }
+  if (normalizedReason.length > 500) {
+    throw new Error("سبب الرفض يجب ألا يتجاوز 500 حرف.");
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("update_order_status", {
+    p_order_id: orderId,
+    p_new_status: "rejected",
+    p_note: normalizedReason,
+  });
+
+  if (error) {
+    console.error("Reject order error:", error);
+    throw new Error(error.message || "تعذر رفض الطلب.");
+  }
+
+  return data?.[0] ?? null;
+}
