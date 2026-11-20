@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, Store } from "lucide-react";
+import { supabase } from "@/services/supabase/client";
 
 import {
   loadManagedBranches,
@@ -31,6 +32,31 @@ export default function BranchesDashboard() {
 
   useEffect(() => {
     load();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function reloadBranches() {
+      try {
+        const latest = await loadManagedBranches();
+        if (active) setBranches(latest);
+      } catch (err) {
+        console.error("Realtime branches refresh failed:", err);
+      }
+    }
+
+    const channel = supabase
+      .channel("lavaza:staff:branches")
+      .on("postgres_changes", { event: "*", schema: "public", table: "branches" }, () => {
+        void reloadBranches();
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   async function toggle(branch: ManagedBranch) {
