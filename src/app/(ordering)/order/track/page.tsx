@@ -396,6 +396,10 @@ function OrderTrackContent() {
     );
   }
 
+  const orderRejectionReason = order.statusHistory.find(
+    (entry) => entry.status === "rejected",
+  )?.note;
+
   const canUpload =
     order.paymentMethod === "bank_transfer" &&
     order.orderStatus === "awaiting_payment" &&
@@ -501,6 +505,20 @@ function OrderTrackContent() {
             </div>
           </div>
         </section>
+
+        {order.orderStatus === "rejected" && (
+          <section className="rounded-3xl border border-red-200 bg-red-50 p-5 text-red-800 shadow-sm">
+            <div className="flex items-start gap-3">
+              <X className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+              <div>
+                <h3 className="font-bold">سبب رفض الطلب</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                  {orderRejectionReason || "لم يتم توضيح سبب الرفض."}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Payment */}
         <section className="rounded-3xl bg-white p-5 shadow-sm">
