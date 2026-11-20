@@ -57,6 +57,10 @@ On iOS/iPadOS, Web Push requires a supported iOS/iPadOS version and the web app 
 - Disable or enable a branch and verify the checkout branch list refreshes.
 - Change an order status and verify the statistics dashboard refreshes.
 
+## Migration history warning
+
+The connected Supabase project currently has older migration-history entries that are not all represented in this repository. The two new migrations in this branch are applied to the connected project, but do not run `supabase db push` from this repository until the older remote migration history has been reconciled with the local `supabase/migrations` directory.
+
 ## Operational notes
 
 Realtime is the primary update mechanism. The timed refreshes are recovery fallbacks, not the normal update path. Push notifications are separate from Realtime: they notify employees when their app is not in the foreground, while the open dashboard uses Realtime and the audio alert.
