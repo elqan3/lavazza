@@ -113,6 +113,8 @@ function playNewOrderSound() {
     void context.resume().then(() => {
       oscillator.start();
       oscillator.stop(context.currentTime + 0.3);
+    }).catch(() => {
+      void context.close();
     });
   } catch (error) {
     console.warn("New-order sound could not play:", error);
@@ -191,6 +193,18 @@ export default function OrdersDashboard({
       if (document.visibilityState === "visible") void refreshFromRealtime();
     }, 30000);
 
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "LAVAZA_ORDER_PUSH") return;
+      const orderId = typeof event.data.orderId === "string" ? event.data.orderId : "";
+      if (orderId && !seenOrderIds.current.has(orderId)) {
+        seenOrderIds.current.add(orderId);
+        playNewOrderSound();
+      }
+      void refreshFromRealtime();
+    };
+
+    navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
+
     const channel = supabase
       .channel("lavaza:staff:orders")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
@@ -212,6 +226,7 @@ export default function OrdersDashboard({
     return () => {
       active = false;
       window.clearInterval(fallbackRefresh);
+      navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
       void supabase.removeChannel(channel);
     };
   }, [status, search]);
