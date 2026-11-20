@@ -40,6 +40,10 @@ export default function ProductsClient({ initialProducts }: Props) {
       }
     }
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void reloadProducts();
+    }, 60000);
+
     const channel = supabase
       .channel("lavaza:staff:products")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
@@ -52,6 +56,7 @@ export default function ProductsClient({ initialProducts }: Props) {
 
     return () => {
       active = false;
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, []);
