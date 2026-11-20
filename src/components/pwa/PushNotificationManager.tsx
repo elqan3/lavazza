@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 
 type PushState = "loading" | "unsupported" | "blocked" | "subscribed" | "unsubscribed";
 
-function urlBase64ToUint8Array(value: string) {
+function urlBase64ToArrayBuffer(value: string): ArrayBuffer {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = window.atob(base64);
-  return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(raw.length);
+
+  for (let index = 0; index < raw.length; index += 1) {
+    bytes[index] = raw.charCodeAt(index);
+  }
+
+  return bytes.buffer as ArrayBuffer;
 }
 
 export default function PushNotificationManager() {
@@ -71,7 +77,7 @@ export default function PushNotificationManager() {
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
+          applicationServerKey: urlBase64ToArrayBuffer(publicKey),
         });
       }
 
