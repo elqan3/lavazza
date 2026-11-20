@@ -53,8 +53,11 @@ export async function POST(request: Request) {
   if (
     typeof endpoint !== "string" ||
     !endpoint.startsWith("https://") ||
+    endpoint.length > 2048 ||
     typeof p256dh !== "string" ||
-    typeof authKey !== "string"
+    p256dh.length > 256 ||
+    typeof authKey !== "string" ||
+    authKey.length > 256
   ) {
     return NextResponse.json({ error: "بيانات الاشتراك ناقصة أو غير صالحة." }, { status: 400 });
   }
