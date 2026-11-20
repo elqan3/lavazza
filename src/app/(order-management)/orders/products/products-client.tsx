@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Check, Package, RefreshCw, Search, X } from "lucide-react";
+import { supabase } from "@/services/supabase/client";
 import {
   loadManagementProducts,
   setProductAvailability,
@@ -27,6 +28,33 @@ export default function ProductsClient({ initialProducts }: Props) {
 
   const availableCount = products.filter((p) => p.is_available).length;
   const unavailableCount = products.length - availableCount;
+
+  useEffect(() => {
+    let active = true;
+    async function reloadProducts() {
+      try {
+        const latest = await loadManagementProducts();
+        if (active) setProducts(latest);
+      } catch (error) {
+        console.error("Realtime products refresh failed:", error);
+      }
+    }
+
+    const channel = supabase
+      .channel("lavaza:staff:products")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+        void reloadProducts();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "product_categories" }, () => {
+        void reloadProducts();
+      })
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, []);
 
   function refresh() {
     startRefresh(async () => {
