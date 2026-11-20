@@ -89,6 +89,7 @@ function OrderTrackContent() {
   const [order, setOrder] = useState<GuestOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const [selectedFile, setSelectedFile] =
     useState<File | null>(null);
@@ -129,13 +130,14 @@ function OrderTrackContent() {
   trackingToken,
 );
       setOrder(data);
+      setLoadError("");
     } catch (error) {
       console.error("Load order error:", error);
 
       if (error instanceof Error) {
-        setUploadError(error.message);
+        setLoadError(error.message);
       } else {
-        setUploadError("تعذر تحميل الطلب.");
+        setLoadError("تعذر تحميل الطلب.");
       }
     } finally {
       setLoading(false);
@@ -368,17 +370,26 @@ function OrderTrackContent() {
             </h1>
 
             <p className="mt-2 text-sm text-neutral-500">
-              {uploadError ||
+              {loadError ||
                 "تأكد من أن بيانات التتبع صحيحة."}
             </p>
 
-            <button
-              type="button"
-              onClick={() => router.push("/order")}
-              className="mt-6 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white"
-            >
-              العودة إلى القائمة
-            </button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => void loadOrder()}
+                className="rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white"
+              >
+                إعادة المحاولة
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/order")}
+                className="rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-700"
+              >
+                العودة إلى القائمة
+              </button>
+            </div>
           </div>
         </div>
       </main>
