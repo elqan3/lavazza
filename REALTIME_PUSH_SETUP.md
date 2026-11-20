@@ -13,19 +13,14 @@
 
 ## Vercel environment variables
 
-The VAPID variables have been created for Preview and Production:
+The required variables are configured for Preview and Production:
 
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — public browser key.
 - `VAPID_PRIVATE_KEY` — sensitive server-only signing key.
 - `VAPID_SUBJECT` — VAPID contact URI.
+- `SUPABASE_SERVICE_ROLE_KEY` — sensitive server-only Supabase service-role key.
 
-One additional variable must be added manually:
-
-- `SUPABASE_SERVICE_ROLE_KEY` — the legacy service-role key from the Lavaza Supabase project.
-
-Add it as a **Sensitive** environment variable for both **Preview** and **Production** in the Vercel project settings. Never prefix it with `NEXT_PUBLIC_`, never commit it to Git, and never paste it into browser code.
-
-After adding the variable, redeploy the Preview deployment and the Production deployment.
+Never prefix a secret with `NEXT_PUBLIC_`, commit it to Git, or expose it to browser code. Redeploy after changing environment variables.
 
 ## Employee setup
 
@@ -45,21 +40,21 @@ On iOS/iPadOS, Web Push requires a supported iOS/iPadOS version and the web app 
 - Push subscriptions can be created and removed only by authenticated staff users, and each row is tied to `auth.uid()`.
 - The service-role key is used only by the server-side push sender.
 - The order checkout remains successful if push delivery is unavailable.
+- A unique delivery row per order prevents duplicate push sends.
 
-## Manual verification checklist
+## Manual verification
 
-- Open the employee order dashboard on two separate signed-in staff devices.
-- Create one customer order and verify that both dashboards refresh without manual reload.
-- Verify the active dashboard plays the new-order sound.
-- Enable Push on one staff device, background or close the app, then create another order and verify a system notification appears.
-- Open a customer tracking page, change the order status from the employee dashboard, and verify the customer page updates automatically.
-- Change a product's availability and verify the customer menu refreshes.
-- Disable or enable a branch and verify the checkout branch list refreshes.
-- Change an order status and verify the statistics dashboard refreshes.
+The following end-to-end checks were completed on the Vercel Preview deployment:
+
+- Employee dashboard refreshed immediately after a new order was created.
+- Push subscription activation completed successfully.
+- A system push notification arrived while the app was closed/backgrounded.
+- Realtime and push behavior were verified without duplicate notifications.
+- The user confirmed the full set of planned checks passed.
 
 ## Migration history warning
 
-The connected Supabase project currently has older migration-history entries that are not all represented in this repository. The two new migrations in this branch are applied to the connected project, but do not run `supabase db push` from this repository until the older remote migration history has been reconciled with the local `supabase/migrations` directory.
+The connected Supabase project has older migration-history entries that are not all represented in this repository. The two new migrations in this branch are already applied to the connected project. Do not run `supabase db push` from this repository until the older remote migration history has been reconciled with the local `supabase/migrations` directory.
 
 ## Operational notes
 
