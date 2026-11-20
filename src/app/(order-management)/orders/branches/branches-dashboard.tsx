@@ -46,6 +46,10 @@ export default function BranchesDashboard() {
       }
     }
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void reloadBranches();
+    }, 60000);
+
     const channel = supabase
       .channel("lavaza:staff:branches")
       .on("postgres_changes", { event: "*", schema: "public", table: "branches" }, () => {
@@ -55,6 +59,7 @@ export default function BranchesDashboard() {
 
     return () => {
       active = false;
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, []);
