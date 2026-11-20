@@ -27,7 +27,16 @@ self.addEventListener("push", (event) => {
     },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const hasFocusedLavazaWindow = clients.some(
+        (client) => client.visibilityState === "visible" && client.focused,
+      );
+
+      if (hasFocusedLavazaWindow) return undefined;
+      return self.registration.showNotification(title, options);
+    }),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
