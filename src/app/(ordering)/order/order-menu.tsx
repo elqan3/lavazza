@@ -54,6 +54,10 @@ export default function OrderMenu({
   const router = useRouter();
 
   useEffect(() => {
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60000);
+
     const channel = supabase
       .channel("lavaza:public:catalog")
       .on("broadcast", { event: "catalog_changed" }, () => {
@@ -62,6 +66,7 @@ export default function OrderMenu({
       .subscribe();
 
     return () => {
+      window.clearInterval(fallbackRefresh);
       void supabase.removeChannel(channel);
     };
   }, [router]);
