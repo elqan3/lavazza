@@ -138,6 +138,7 @@ export default function OrdersDashboard({
 
   const [actionOrderId, setActionOrderId] =
     useState<string | null>(null);
+  const [newOrderNotice, setNewOrderNotice] = useState(false);
 
   const seenOrderIds = useRef(new Set(initialOrders.map((order) => order.order_id)));
 
@@ -198,6 +199,7 @@ export default function OrdersDashboard({
       const orderId = typeof event.data.orderId === "string" ? event.data.orderId : "";
       if (orderId && !seenOrderIds.current.has(orderId)) {
         seenOrderIds.current.add(orderId);
+        setNewOrderNotice(true);
         playNewOrderSound();
       }
       void refreshFromRealtime();
@@ -211,6 +213,7 @@ export default function OrdersDashboard({
         const inserted = payload.new as { id?: string };
         if (inserted.id && !seenOrderIds.current.has(inserted.id)) {
           seenOrderIds.current.add(inserted.id);
+          setNewOrderNotice(true);
           playNewOrderSound();
         }
         void refreshFromRealtime();
@@ -328,6 +331,22 @@ export default function OrdersDashboard({
             </div>
           </div>
         </section>
+
+        {newOrderNotice && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-900"
+          >
+            <span>وصل طلب جديد. تم تحديث قائمة الطلبات تلقائياً.</span>
+            <button
+              type="button"
+              onClick={() => setNewOrderNotice(false)}
+              className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-bold text-emerald-900"
+            >
+              إغلاق
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
