@@ -180,6 +180,10 @@ function OrderTrackContent() {
 
     void connectToOrderUpdates();
 
+    const fallbackRefresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") void loadOrder(true);
+    }, 15000);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") void loadOrder(true);
     };
@@ -187,6 +191,7 @@ function OrderTrackContent() {
 
     return () => {
       active = false;
+      window.clearInterval(fallbackRefresh);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (channel) void supabase.removeChannel(channel);
     };
