@@ -29,14 +29,15 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const hasFocusedLavazaWindow = clients.some(
-        (client) => client.visibilityState === "visible" && client.focused,
+      const ordersUrl = new URL("/orders", self.location.origin).href;
+      const focusedClient = clients.find(
+        (client) =>
+          client.url.startsWith(ordersUrl) &&
+          client.visibilityState === "visible" &&
+          client.focused,
       );
 
-      if (hasFocusedLavazaWindow) {
-        const focusedClient = clients.find(
-          (client) => client.visibilityState === "visible" && client.focused,
-        );
+      if (focusedClient) {
         focusedClient?.postMessage({
           type: "LAVAZA_ORDER_PUSH",
           orderId: data.orderId,
