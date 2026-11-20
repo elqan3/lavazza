@@ -33,7 +33,16 @@ self.addEventListener("push", (event) => {
         (client) => client.visibilityState === "visible" && client.focused,
       );
 
-      if (hasFocusedLavazaWindow) return undefined;
+      if (hasFocusedLavazaWindow) {
+        const focusedClient = clients.find(
+          (client) => client.visibilityState === "visible" && client.focused,
+        );
+        focusedClient?.postMessage({
+          type: "LAVAZA_ORDER_PUSH",
+          orderId: data.orderId,
+        });
+        return undefined;
+      }
       return self.registration.showNotification(title, options);
     }),
   );
